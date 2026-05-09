@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pro Photo Editor+</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial;
+    background: #1e1e1e;
+    color: white;
+    display: flex;
+  }
+
+  #left {
+    flex: 1;
+    text-align: center;
+    position: relative;
+  }
+
+  canvas {
+    margin-top: 10px;
+    border: 2px solid #444;
+    cursor: text;
+    background: #111;
+  }
+
+  #panel {
+    width: 280px;
+    background: #2a2a2a;
+    padding: 10px;
+  }
+
+  button, input, select {
+    width: 100%;
+    margin: 5px 0;
+    padding: 6px;
+    background: #4CAF50;
+    border: none;
+    color: white;
+    cursor: pointer;
+  }
+
+  .layer {
+    background: #333;
+    margin: 5px 0;
+    padding: 5px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .active { background: #555; }
+</style>
+</head>
+<body>
+
+<div id="left">
+  <h3>Pro Editor+</h3>
+  <input type="file" id="upload" accept="image/*">
+  <canvas id="canvas" width="900" height="600"></canvas>
+</div>
+
+<div id="panel">
+  <button onclick="addText()">Add Text</button>
+  <button onclick="duplicate()">Duplicate</button>
+  <button onclick="removeLayer()">Delete</button>
+  <button onclick="download()">Export</button>
+
+  <label>Rotate</label>
+  <input id="rotateSlider" type="range" min="0" max="360" value="0">
+
+  <label>Scale</label>
+  <input id="scaleSlider" type="range" min="0.1" max="5" step="0.1" value="1">
+
+  <label>Font</label>
+  <select id="fontPicker">
+    <option>Arial</option>
+    <option>Courier New</option>
+    <option>Georgia</option>
+    <option>Times New Roman</option>
+    <option>Verdana</option>
+  </select>
+
+  <label>Color</label>
+  <input id="colorPicker" type="color" value="#ffffff">
+
+  <label><input type="checkbox" id="outline"> Outline</label>
+
+  <h4>Layers</h4>
+  <div id="layers"></div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const upload = document.getElementById("upload");
+const layersDiv = document.getElementById("layers");
+const rotateSlider = document.getElementById("rotateSlider");
+const scaleSlider = document.getElementById("scaleSlider");
+const fontPicker = document.getElementById("fontPicker");
+const colorPicker = document.getElementById("colorPicker");
+const outlineBox = document.getElementById("outline");
+
+let layers = [];
+let selected = null;
+
+upload.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const img = new Image();
+  const reader = new FileReader();
+
+  reader.onload = () => img.src = reader.result;
+  reader.readAsDataURL(file);
+
+  img.onload = () => {
+    layers.push({ type:"image", img, x:450, y:300, rot:0, scale:1 });
+    selected = layers.length - 1;
+    updateUI();
+    draw();
+  };
+});
+
+function addText() {
+  layers.push({ type:"text", text:"Click to type", x:450, y:300, rot:0, scale:1, font:"Arial", color:"#ffffff", outline:false });
+  selected = layers.length - 1;
+  updateUI();
+  draw();
+}
+
+function duplicate() {
+  if (selected === null) return;
+  layers.push(JSON.parse(JSON.stringify(layers[selected])));
+  selected = layers.length - 1;
+  updateUI();
+  draw();
+}
+
+function removeLayer() {
+  if (selected === null) return;
+  layers.splice(selected, 1);
+  selected = null;
+  updateUI();
+  draw();
+}
+
+function updateUI() {
+  layersDiv.innerHTML = "";
+  layers.forEach((l,i)=>{
+    const div=document.createElement("div");
+    div.className="layer"+(i===selected?" active":"");
+    div.innerText=l.type+" "+i;
+    div.onclick=()=>{selected=i;updateUI();draw();};
+    layersDiv.appendChild(div);
+  });
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  layers.forEach(l=>{
+    ctx.save();
+    ctx.translate(l.x,l.y);
+    ctx.rotate(l.rot||0);
+    const s=l.scale||1;
+
+    if(l.type==="image"){
+      ctx.scale(s,s);
+      ctx.drawImage(l.img,-l.img.width/2,-l.img.height/2);
+    }
+
+    if(l.type==="text"){
+      ctx.scale(s,s);
+      ctx.font=`30px ${l.font}`;
+      ctx.fillStyle=l.color;
+      ctx.textAlign="center";
+      ctx.textBaseline="middle";
+      if(l.outline){
+        ctx.strokeStyle="#000";
+        ctx.lineWidth=4;
+        ctx.strokeText(l.text,0,0);
+      }
+      ctx.fillText(l.text,0,0);
+    }
+
+    ctx.restore();
+  });
+}
+
+function download(){
+  const out=document.createElement("canvas");
+  const octx=out.getContext("2d");
+  out.width=canvas.width;
+  out.height=canvas.height;
+
+  layers.forEach(l=>{
+    octx.save();
+    octx.translate(l.x,l.y);
+    octx.rotate(l.rot||0);
+    const s=l.scale||1;
+
+    if(l.type==="image"){
+      octx.scale(s,s);
+      octx.drawImage(l.img,-l.img.width/2,-l.img.height/2);
+    }
+
+    if(l.type==="text"){
+      octx.scale(s,s);
+      octx.font=`30px ${l.font}`;
+      octx.fillStyle=l.color;
+      octx.textAlign="center";
+      octx.textBaseline="middle";
+      if(l.outline){
+        octx.strokeStyle="#000";
+        octx.lineWidth=4;
+        octx.strokeText(l.text,0,0);
+      }
+      octx.fillText(l.text,0,0);
+    }
+
+    octx.restore();
+  });
+
+  out.toBlob(b=>{
+    const url=URL.createObjectURL(b);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download="pro-edit.png";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+draw();
+</script>
+</body>
+</html>
