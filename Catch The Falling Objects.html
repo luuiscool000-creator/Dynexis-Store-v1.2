@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Catch Game</title>
+<style>
+  body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
+  #gameArea {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(#111, #222);
+  }
+  #player {
+    position: absolute;
+    bottom: 20px;
+    width: 80px;
+    height: 20px;
+    background: #4caf50;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 5px;
+  }
+  .falling {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: red;
+    border-radius: 50%;
+  }
+  #score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 20px;
+  }
+</style>
+</head>
+<body>
+<div id="gameArea">
+  <div id="score">Score: 0</div>
+  <div id="player"></div>
+</div>
+
+<script>
+const gameArea = document.getElementById('gameArea');
+const player = document.getElementById('player');
+const scoreDisplay = document.getElementById('score');
+
+let score = 0;
+let playerX = window.innerWidth / 2;
+
+// Move player with mouse
+window.addEventListener('mousemove', (e) => {
+  playerX = e.clientX;
+  player.style.left = playerX + 'px';
+});
+
+function createFalling() {
+  const obj = document.createElement('div');
+  obj.classList.add('falling');
+  obj.style.left = Math.random() * window.innerWidth + 'px';
+  obj.style.top = '0px';
+  gameArea.appendChild(obj);
+
+  let fallInterval = setInterval(() => {
+    let top = parseInt(obj.style.top);
+    obj.style.top = top + 5 + 'px';
+
+    const objRect = obj.getBoundingClientRect();
+    const playerRect = player.getBoundingClientRect();
+
+    // Collision
+    if (
+      objRect.bottom >= playerRect.top &&
+      objRect.left < playerRect.right &&
+      objRect.right > playerRect.left
+    ) {
+      score++;
+      scoreDisplay.innerText = 'Score: ' + score;
+      obj.remove();
+      clearInterval(fallInterval);
+    }
+
+    // Missed
+    if (top > window.innerHeight) {
+      obj.remove();
+      clearInterval(fallInterval);
+    }
+  }, 20);
+}
+
+setInterval(createFalling, 800);
+</script>
+</body>
+</html>
