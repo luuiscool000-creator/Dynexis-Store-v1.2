@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Space Shooter</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: black;
+    font-family: Arial, sans-serif;
+    color: white;
+  }
+
+  #game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, #111, #000);
+  }
+
+  #player {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    background: lime;
+    transform: translateX(-50%);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+
+  .bullet {
+    position: absolute;
+    width: 5px;
+    height: 12px;
+    background: yellow;
+  }
+
+  .enemy {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: red;
+    border-radius: 50%;
+  }
+
+  #hud {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 18px;
+  }
+
+  #startScreen, #gameOver {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background: lime;
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div id="hud">Score: 0 | HP: 3</div>
+  <div id="player"></div>
+
+  <div id="startScreen">
+    <h1>Space Shooter</h1>
+    <p>Move with mouse • Press SPACE to shoot</p>
+    <button onclick="startGame()">Start</button>
+  </div>
+
+  <div id="gameOver" style="display:none;">
+    <h1>Game Over</h1>
+    <p id="finalScore"></p>
+    <button onclick="location.reload()">Restart</button>
+  </div>
+</div>
+
+<script>
+const game = document.getElementById('game');
+const player = document.getElementById('player');
+const hud = document.getElementById('hud');
+const startScreen = document.getElementById('startScreen');
+const gameOver = document.getElementById('gameOver');
+const finalScore = document.getElementById('finalScore');
+
+let score = 0;
+let hp = 3;
+let playing = false;
+let playerX = window.innerWidth / 2;
+
+let bullets = [];
+let enemies = [];
+
+window.addEventListener('mousemove', (e) => {
+  playerX = e.clientX;
+  player.style.left = playerX + 'px';
+});
+
+window.addEventListener('keydown', (e) => {
+  if (!playing) return;
+  if (e.code === 'Space') shoot();
+});
+
+function shoot() {
+  const b = document.createElement('div');
+  b.classList.add('bullet');
+  b.style.left = playerX + 'px';
+  b.style.bottom = '80px';
+  game.appendChild(b);
+  bullets.push(b);
+}
+
+function spawnEnemy() {
+  if (!playing) return;
+
+  const e = document.createElement('div');
+  e.classList.add('enemy');
+  e.style.left = Math.random() * window.innerWidth + 'px';
+  e.style.top = '0px';
+  game.appendChild(e);
+  enemies.push(e);
+}
+
+function update() {
+  if (!playing) return;
+
+  bullets.forEach((b, bi) => {
+    let y = parseFloat(b.style.bottom);
+    b.style.bottom = y + 8 + 'px';
+
+    if (y > window.innerHeight) {
+      b.remove();
+      bullets.splice(bi, 1);
+    }
+  });
+
+  enemies.forEach((e, ei) => {
+    let y = parseFloat(e.style.top);
+    e.style.top = y + 3 + 'px';
+
+    const er = e.getBoundingClientRect();
+
+    bullets.forEach((b, bi) => {
+      const br = b.getBoundingClientRect();
+
+      if (
+        br.left < er.right &&
+        br.right > er.left &&
+        br.top < er.bottom &&
+        br.bottom > er.top
+      ) {
+        e.remove();
+        b.remove();
+        enemies.splice(ei, 1);
+        bullets.splice(bi, 1);
+        score++;
+        updateHUD();
+      }
+    });
+
+    if (y > window.innerHeight) {
+      e.remove();
+      enemies.splice(ei, 1);
+      hp--;
+      updateHUD();
+      if (hp <= 0) endGame();
+    }
+  });
+
+  requestAnimationFrame(update);
+}
+
+function updateHUD() {
+  hud.innerText = `Score: ${score} | HP: ${hp}`;
+}
+
+function startGame() {
+  startScreen.style.display = 'none';
+  playing = true;
+  score = 0;
+  hp = 3;
+  updateHUD();
+
+  setInterval(spawnEnemy, 900);
+  update();
+}
+
+function endGame() {
+  playing = false;
+  gameOver.style.display = 'flex';
+  finalScore.innerText = `Score: ${score}`;
+}
+game.addEventListener('click', () => {
+  if (!playing) return;
+  shoot();
+});
+
+</script>
+
+</body>
+</html>
