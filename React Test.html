@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Reaction Test</title>
+
+<style>
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex-direction: column;
+}
+
+#btn {
+  width: 200px;
+  height: 200px;
+  border: none;
+  border-radius: 20px;
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+  background: red;
+  transition: 0.2s;
+}
+
+#info {
+  margin-top: 20px;
+  font-size: 18px;
+}
+</style>
+
+</head>
+<body>
+
+<button id="btn">WAIT...</button>
+<div id="info">Click green as fast as you can</div>
+
+<script>
+const btn = document.getElementById("btn");
+const info = document.getElementById("info");
+
+let isGreen = false;
+let greenTime = 0;
+let gameRunning = true;
+
+// turn green every 5 seconds
+function loop() {
+  setTimeout(() => {
+    if (!gameRunning) return;
+
+    btn.style.background = "green";
+    btn.textContent = "CLICK!";
+    isGreen = true;
+    greenTime = Date.now();
+
+  }, 5000);
+}
+
+loop();
+
+// click handler
+btn.onclick = () => {
+  if (isGreen) {
+    const reaction = Date.now() - greenTime;
+
+    info.textContent = "⚡ Reaction: " + reaction + " ms";
+
+    btn.style.background = "red";
+    btn.textContent = "WAIT...";
+    isGreen = false;
+
+    // wait 4 seconds before next green
+    setTimeout(() => {
+      loop();
+    }, 4000);
+  }
+};
+</script>
+
+</body>
+</html>
