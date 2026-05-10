@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dynexis OS</title>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="PUT-YOUR-IMAGE-URL-HERE">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,Segoe UI,sans-serif;}
+body{
+  height:100vh;overflow:hidden;color:#e5e7eb;
+  background:radial-gradient(circle at top,#22d3ee 0,#020617 45%,#000 100%);
+  background-size:cover;background-position:center;background-attachment:fixed;
+}
+
+/* Boot */
+#boot-screen{
+  position:fixed;inset:0;background:#000;display:flex;
+  align-items:center;justify-content:center;z-index:9999;
+}
+#boot-logo{
+  width:120px;height:120px;border-radius:32px;
+  border:2px solid #22d3ee;
+  display:flex;align-items:center;justify-content:center;
+  font-size:64px;font-weight:700;color:#e0f2fe;
+  box-shadow:0 0 30px #22d3ee;
+  animation:bootSpin 2.5s linear infinite;
+}
+
+/* Shutdown */
+#shutdown-screen{
+  position:fixed;inset:0;background:#020617;pointer-events:none;
+  opacity:0;z-index:9998;display:flex;align-items:center;justify-content:center;
+}
+#shutdown-lines{
+  width:100%;height:2px;background:linear-gradient(90deg,#22d3ee,#0ea5e9,#22d3ee);
+  box-shadow:0 0 20px #22d3ee;
+  transform:scaleX(0);
+}
+
+/* Desktop */
+#desktop{
+  position:absolute;inset:0;padding:18px 18px 60px 18px;
+  display:flex;align-items:flex-start;gap:16px;
+}
+
+/* Icon grid */
+#icon-column{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,72px);
+  grid-auto-rows:auto;
+  gap:14px;
+  padding:10px;
+  width:100%;
+  height:calc(100vh - 60px);
+  overflow-y:auto;
+  align-content:start;
+  justify-content:start;
+}
+#minigame-icon-container{display:contents;}
+.icon{
+  width:72px;text-align:center;cursor:pointer;
+  transition:transform .15s,filter .15s;
+}
+.icon:hover{transform:translateY(-2px);filter:brightness(1.2);}
+.icon div{
+  width:52px;height:52px;margin:auto;margin-bottom:4px;
+  border-radius:18px;
+  background:radial-gradient(circle at 20% 0%,#22d3ee,#0f172a);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;box-shadow:0 10px 25px #0008;
+}
+.icon span{font-size:11px;text-shadow:0 1px 2px #000;}
+
+/* Taskbar */
+#taskbar{
+  position:fixed;left:0;right:0;bottom:0;height:46px;
+  display:flex;align-items:center;gap:10px;
+  padding:0 12px;
+  background:linear-gradient(to top,rgba(15,23,42,.98),rgba(15,23,42,.7));
+  backdrop-filter:blur(16px);
+  border-top:1px solid rgba(148,163,184,.4);
+  z-index:50;
+}
+#start-btn{
+  background:linear-gradient(135deg,#22d3ee,#0ea5e9);
+  border:none;color:white;padding:7px 14px;border-radius:999px;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;
+  box-shadow:0 8px 18px #0008;font-size:13px;
+}
+#start-btn span.logo{
+  width:16px;height:16px;border-radius:4px;
+  background:conic-gradient(from 180deg,#22d3ee,#0ea5e9,#22d3ee,#a5f3fc);
+}
+#taskbar-apps{display:flex;gap:6px;margin-left:6px;}
+.tb-app{
+  padding:4px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.4);
+  background:rgba(15,23,42,.9);color:#e5e7eb;font-size:11px;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+}
+.tb-dot{width:6px;height:6px;border-radius:50%;background:#22d3ee;}
+#clock{margin-left:auto;font-size:12px;color:#bae6fd;}
+#quick-settings-btn{
+  margin-left:8px;margin-right:6px;
+  width:26px;height:26px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;
+  background:radial-gradient(circle,#22d3ee,#0f172a);
+  box-shadow:0 0 12px #22d3ee;
+}
+
+/* Start menu */
+#start-menu{
+  position:fixed;left:10px;bottom:50px;width:260px;
+  background:rgba(15,23,42,.97);backdrop-filter:blur(20px);
+  border-radius:16px;padding:10px;border:1px solid rgba(148,163,184,.4);
+  display:none;box-shadow:0 20px 40px #000c;
+  animation:fadeUp .18s ease-out;
+  z-index:60;
+}
+#start-menu h4{font-size:13px;margin-bottom:6px;color:#e5e7eb;}
+.menu-item{
+  padding:6px 8px;border-radius:8px;cursor:pointer;font-size:12px;
+  display:flex;align-items:center;gap:6px;color:#e5e7eb;
+}
+.menu-item span.icon-badge{
+  width:18px;height:18px;border-radius:6px;
+  background:#020617;display:flex;align-items:center;justify-content:center;
+  font-size:11px;
+}
+.menu-item:hover{background:rgba(56,189,248,.35);}
+
+/* Quick settings */
+#quick-settings-panel{
+  position:fixed;right:10px;bottom:50px;width:260px;
+  background:rgba(15,23,42,.97);backdrop-filter:blur(20px);
+  border-radius:16px;padding:10px;border:1px solid rgba(56,189,248,.7);
+  box-shadow:0 20px 40px #000c;
+  transform:translateY(120%);opacity:0;
+  transition:transform .2s ease-out,opacity .2s ease-out;
+  z-index:60;
+}
+#quick-settings-panel.active{transform:translateY(0);opacity:1;}
+.qs-section{margin-bottom:8px;font-size:12px;}
+.qs-section h3{font-size:12px;margin-bottom:4px;color:#e5e7eb;}
+.qs-section button{
+  padding:4px 10px;border-radius:999px;border:none;
+  background:#0ea5e9;color:#e0f2fe;font-size:11px;cursor:pointer;
+  margin-right:4px;margin-bottom:4px;
+}
+#volume-slider{width:100%;}
+#bg-file-input{display:none;}
+
+/* Windows */
+.window{
+  position:absolute;top:90px;left:140px;width:520px;height:320px;
+  background:rgba(15,23,42,.94);backdrop-filter:blur(20px);
+  border-radius:18px;border:1px solid rgba(56,189,248,.6);
+  box-shadow:0 26px 60px #000d;display:none;
+  overflow:hidden;animation:popIn .18s ease-out;
+  z-index:40;
+}
+.window.maximized{
+  top:0;left:0;width:100vw;height:100vh;border-radius:0;
+}
+.window.maximized .titlebar{cursor:default;border-radius:0;}
+.titlebar{
+  height:34px;padding:0 10px;display:flex;align-items:center;
+  justify-content:space-between;cursor:move;
+  background:linear-gradient(to right,rgba(15,23,42,.95),rgba(8,47,73,.9));
+}
+.title-left{display:flex;align-items:center;gap:8px;font-size:13px;}
+.title-dot{width:8px;height:8px;border-radius:50%;background:#22d3ee;}
+.window-buttons{display:flex;gap:6px;}
+.btn{
+  width:16px;height:16px;border-radius:999px;border:none;cursor:pointer;
+  box-shadow:0 0 0 1px rgba(15,23,42,.8);
+}
+.btn-close{background:#ef4444;}
+.btn-min{background:#facc15;}
+.btn-max{background:#4ade80;}
+.content{padding:10px;height:calc(100% - 34px);font-size:13px;}
+textarea{
+  width:100%;height:100%;background:#020617;border:1px solid #1f2937;
+  color:white;padding:6px;border-radius:8px;resize:none;
+}
+
+/* Browser */
+#browser-bar{display:flex;gap:6px;margin-bottom:8px;}
+#browser-url{
+  flex:1;padding:6px 8px;font-size:12px;border-radius:999px;
+  border:1px solid rgba(148,163,184,.6);
+  background:rgba(15,23,42,.9);color:#e5e7eb;
+}
+#browser-frame{
+  flex:1;border-radius:12px;border:1px solid rgba(56,189,248,.6);
+  background:white;width:100%;height:100%;
+}
+
+/* Paint */
+#paint-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:6px;font-size:12px;}
+#paint-canvas{
+  background:#020617;border:1px solid #1f2937;border-radius:10px;cursor:crosshair;
+}
+
+/* Music */
+#music-status{font-size:12px;color:#a5b4fc;}
+#music-controls button{
+  padding:6px 10px;border-radius:999px;border:none;
+  font-size:12px;cursor:pointer;margin-right:6px;margin-bottom:4px;
+}
+
+/* Monitor */
+#sys-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;font-size:12px;
+}
+.sys-card{
+  padding:8px;border-radius:10px;
+  background:rgba(15,23,42,.9);border:1px solid rgba(30,64,175,.7);
+}
+.sys-label{font-size:11px;color:#9ca3af;margin-bottom:2px;}
+.sys-value{font-size:14px;}
+
+/* Store */
+.store-item{
+  padding:8px;border-radius:10px;
+  background:rgba(15,23,42,.9);border:1px solid rgba(51,65,85,.9);
+  display:flex;flex-direction:column;gap:4px;font-size:12px;margin-bottom:8px;
+}
+.store-header{display:flex;align-items:center;gap:8px;}
+.store-icon{
+  width:22px;height:22px;border-radius:8px;
+  background:radial-gradient(circle at 20% 0%,#22d3ee,#0f172a);
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+}
+.store-title{font-size:13px;}
+.store-desc{color:#9ca3af;font-size:11px;}
+.store-footer{display:flex;align-items:center;gap:8px;}
+.store-progress{
+  flex:1;height:6px;border-radius:999px;background:#020617;overflow:hidden;
+}
+.store-progress-inner{
+  height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#22d3ee);
+  transition:width .3s linear;
+}
+.store-btn{
+  padding:4px 10px;border-radius:999px;border:none;
+  background:#22d3ee;color:#022c22;font-size:11px;cursor:pointer;
+}
+.store-btn[disabled]{opacity:.5;cursor:default;}
+
+/* Mini-game */
+#orb-area{
+  position:relative;flex:1;border-radius:12px;border:1px solid #1f2937;
+  background:#020617;overflow:hidden;height:200px;margin-bottom:6px;
+}
+#orb{
+  position:absolute;width:26px;height:26px;border-radius:999px;
+  background:radial-gradient(circle,#facc15,#f97316);
+  box-shadow:0 0 18px #facc15;
+}
+
+/* Studio list */
+#studio-list{
+  margin-top:6px;padding:6px;border-radius:8px;
+  background:rgba(15,23,42,.9);border:1px solid #1f2937;
+  font-size:12px;max-height:120px;overflow:auto;
+}
+.studio-item{margin-bottom:4px;color:#e5e7eb;}
+
+/* Files app */
+#files-list{
+  margin-top:4px;padding:6px;border-radius:8px;
+  background:rgba(15,23,42,.9);border:1px solid #1f2937;
+  font-size:12px;max-height:220px;overflow:auto;
+}
+.file-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:4px 6px;border-radius:6px;
+}
+.file-row:hover{background:rgba(15,23,42,.9);}
+.file-main{display:flex;align-items:center;gap:6px;}
+.file-name{font-size:12px;}
+.file-type{font-size:11px;color:#9ca3af;}
+.file-actions button{
+  padding:2px 8px;border-radius:999px;border:none;
+  background:#ef4444;color:#fee2e2;font-size:10px;cursor:pointer;
+}
+
+/* Animations */
+@keyframes popIn{
+  from{transform:scale(.94) translateY(8px);opacity:0;}
+  to{transform:scale(1) translateY(0);opacity:1;}
+}
+@keyframes fadeUp{
+  from{transform:translateY(8px);opacity:0;}
+  to{transform:translateY(0);opacity:1;}
+}
+@keyframes bootSpin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+@keyframes shutdownFade{
+  from{opacity:0;}
+  to{opacity:1;}
+}
+@keyframes shutdownLines{
+  from{transform:scaleX(0);}
+  to{transform:scaleX(1);}
+}
+</style>
+</head>
+<body>
+
+<!-- Boot -->
+<div id="boot-screen"><div id="boot-logo">D</div></div>
+
+<!-- Shutdown -->
+<div id="shutdown-screen"><div id="shutdown-lines"></div></div>
+
+<!-- FIRST-TIME SETUP: password -->
+<div id="setup-screen" style="
+  position:fixed;inset:0;background:radial-gradient(circle at top,#22d3ee 0,#020617 60%,#000 100%);
+  display:flex;align-items:center;justify-content:center;z-index:9500;
+">
+  <div style="background:rgba(15,23,42,.95);border-radius:18px;padding:18px 20px;
+              border:1px solid rgba(56,189,248,.7);width:260px;text-align:center;">
+    <h3 style="margin-bottom:10px;">Set your password</h3>
+    <input id="setup-pass1" type="password" placeholder="New password"
+           style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid #1f2937;
+                  background:#020617;color:#e5e7eb;font-size:12px;margin-bottom:6px;">
+    <input id="setup-pass2" type="password" placeholder="Repeat password"
+           style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid #1f2937;
+                  background:#020617;color:#e5e7eb;font-size:12px;margin-bottom:8px;">
+    <button onclick="finishSetup()" style="
+      padding:6px 12px;border-radius:999px;border:none;background:#22d3ee;color:#022c22;
+      font-size:12px;cursor:pointer;width:100%;
+    ">Save password</button>
+    <div id="setup-error" style="margin-top:6px;font-size:11px;color:#fca5a5;min-height:14px;"></div>
+  </div>
+</div>
+
+<!-- Login -->
+<div id="login-screen" style="
+  position:fixed;inset:0;background:radial-gradient(circle at top,#22d3ee 0,#020617 60%,#000 100%);
+  display:flex;align-items:center;justify-content:center;z-index:9000;
+">
+  <div style="background:rgba(15,23,42,.95);border-radius:18px;padding:18px 20px;
+              border:1px solid rgba(56,189,248,.7);width:260px;text-align:center;">
+    <div style="width:60px;height:60px;border-radius:999px;background:#0f172a;margin:0 auto 10px;
+                display:flex;align-items:center;justify-content:center;font-size:28px;">👤</div>
+    <div style="margin-bottom:8px;font-weight:600;">Luca</div>
+    <input id="login-password" type="password" placeholder="Password"
+           style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid #1f2937;
+                  background:#020617;color:#e5e7eb;font-size:12px;margin-bottom:8px;">
+    <button onclick="loginAttempt()" style="
+      padding:6px 12px;border-radius:999px;border:none;background:#22d3ee;color:#022c22;
+      font-size:12px;cursor:pointer;width:100%;
+    ">Sign in</button>
+    <div id="login-error" style="margin-top:6px;font-size:11px;color:#fca5a5;min-height:14px;"></div>
+  </div>
+</div>
+
+<div id="desktop">
+  <div id="icon-column">
+    <div class="icon" onclick="openWindow('monitor')"><div>🧬</div><span>Monitor</span></div>
+    <div class="icon" onclick="openWindow('notes')"><div>📝</div><span>Notes</span></div>
+    <div class="icon" onclick="openWindow('browser')"><div>🌐</div><span>Browser</span></div>
+    <div class="icon" onclick="openWindow('music')"><div>🎵</div><span>Music</span></div>
+    <div class="icon" onclick="openWindow('paint')"><div>🎨</div><span>Paint</span></div>
+    <div class="icon" onclick="openWindow('store')"><div>🛒</div><span>Store</span></div>
+    <div class="icon" onclick="openWindow('files')"><div>📁</div><span>Files</span></div>
+    <div class="icon" onclick="openWindow('studio')"><div>🧱</div><span>Game Studio</span></div>
+    <div id="minigame-icon-container"></div>
+  </div>
+</div>
+
+<div id="taskbar">
+  <button id="start-btn"><span class="logo"></span><span>Dynexis</span></button>
+  <div id="taskbar-apps"></div>
+  <div id="quick-settings-btn">⚙️</div>
+  <div id="clock"></div>
+</div>
+
+<div id="start-menu">
+  <h4>Pinned</h4>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;font-size:12px;">
+    <div class="menu-item" onclick="openWindow('monitor');toggleStart(false)"><span class="icon-badge">🧬</span>Monitor</div>
+    <div class="menu-item" onclick="openWindow('browser');toggleStart(false)"><span class="icon-badge">🌐</span>Browser</div>
+    <div class="menu-item" onclick="openWindow('store');toggleStart(false)"><span class="icon-badge">🛒</span>Store</div>
+    <div class="menu-item" onclick="openWindow('files');toggleStart(false)"><span class="icon-badge">📁</span>Files</div>
+    <div class="menu-item" onclick="openWindow('studio');toggleStart(false)"><span class="icon-badge">🧱</span>Studio</div>
+    <div class="menu-item" onclick="openWindow('settings');toggleStart(false)"><span class="icon-badge">⚙️</span>Settings</div>
+  </div>
+
+  <h4>All apps</h4>
+  <div style="max-height:140px;overflow:auto;">
+    <div class="menu-item" onclick="openWindow('music');toggleStart(false)"><span class="icon-badge">🎵</span>Music</div>
+    <div class="menu-item" onclick="openWindow('paint');toggleStart(false)"><span class="icon-badge">🎨</span>Paint</div>
+    <div class="menu-item" onclick="openWindow('game3d');toggleStart(false)"><span class="icon-badge">🧊</span>3D Cube</div>
+    <div class="menu-item" onclick="openWindow('minigame');toggleStart(false)"><span class="icon-badge">🎮</span>Orb Runner</div>
+    <div class="menu-item" onclick="openWindow('taskmgr');toggleStart(false)"><span class="icon-badge">📊</span>Task Manager</div>
+  </div>
+</div>
+
+<div id="quick-settings-panel">
+  <div class="qs-section">
+    <h3>Connectivity</h3>
+    <button id="wifi-toggle">Wi‑Fi: ON</button>
+  </div>
+  <div class="qs-section">
+    <h3>Audio</h3>
+    <button id="music-toggle">Background Music: ON</button>
+    <input type="range" id="volume-slider" min="0" max="100" value="70">
+  </div>
+  <div class="qs-section">
+    <h3>Theme</h3>
+    <button onclick="setTheme('default')">Default</button>
+    <button onclick="setTheme('neon')">Neon Flux</button>
+    <button onclick="setTheme('darkcore')">Dark Core</button>
+    <button id="custom-bg-btn">Custom image…</button>
+    <input type="file" id="bg-file-input" accept="image/*">
+  </div>
+  <div class="qs-section">
+    <h3>System</h3>
+    <div id="qs-cpu">CPU: --%</div>
+    <div id="qs-ram">RAM: --%</div>
+    <div id="qs-version">Dynexis OS</div>
+  </div>
+  <div class="qs-section">
+    <button id="shutdown-btn" style="background:#ef4444;color:#fee2e2;">Shut Down</button>
+  </div>
+</div>
+
+<!-- Monitor -->
+<div class="window" id="win-monitor">
+  <div class="titlebar" onmousedown="startDrag(event,'win-monitor')">
+    <div class="title-left"><span class="title-dot"></span><span>System Monitor</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-monitor')"></button>
+      <button class="btn btn-max" onclick="maximize('win-monitor')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-monitor')"></button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="margin-bottom:6px;font-size:12px;color:#9ca3af;">Stats are simulated.</div>
+    <div id="sys-grid">
+      <div class="sys-card"><div class="sys-label">CPU</div><div class="sys-value" id="cpu-val">--%</div></div>
+      <div class="sys-card"><div class="sys-label">RAM</div><div class="sys-value" id="ram-val">--%</div></div>
+      <div class="sys-card"><div class="sys-label">Network</div><div class="sys-value" id="net-val">Idle</div></div>
+      <div class="sys-card"><div class="sys-label">Core</div><div class="sys-value" id="core-val">Online</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Notes -->
+<div class="window" id="win-notes">
+  <div class="titlebar" onmousedown="startDrag(event,'win-notes')">
+    <div class="title-left"><span class="title-dot"></span><span>Notes</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-notes')"></button>
+      <button class="btn btn-max" onclick="maximize('win-notes')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-notes')"></button>
+    </div>
+  </div>
+  <div class="content">
+    <textarea id="notes-area" placeholder="Write here..."></textarea>
+  </div>
+</div>
+
+<!-- Browser -->
+<div class="window" id="win-browser">
+  <div class="titlebar" onmousedown="startDrag(event,'win-browser')">
+    <div class="title-left"><span class="title-dot"></span><span>Browser</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-browser')"></button>
+      <button class="btn btn-max" onclick="maximize('win-browser')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-browser')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;gap:8px;">
+    <div id="browser-bar">
+      <input id="browser-url" type="text" placeholder="Search or URL">
+      <button onclick="browserGo()" style="padding:6px 10px;border-radius:999px;border:none;background:#0ea5e9;color:white;font-size:12px;cursor:pointer;">Go</button>
+    </div>
+    <iframe id="browser-frame"></iframe>
+  </div>
+</div>
+
+<!-- Paint -->
+<div class="window" id="win-paint">
+  <div class="titlebar" onmousedown="startDrag(event,'win-paint')">
+    <div class="title-left"><span class="title-dot"></span><span>Paint</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-paint')"></button>
+      <button class="btn btn-max" onclick="maximize('win-paint')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-paint')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;">
+    <div id="paint-toolbar">
+      <span>Color</span><input type="color" id="paint-color" value="#22d3ee">
+      <span>Size</span><input type="range" id="paint-size" min="1" max="30" value="6">
+      <button onclick="paintClear()" style="padding:4px 10px;border-radius:999px;border:none;background:#ef4444;color:white;font-size:11px;cursor:pointer;">Clear</button>
+    </div>
+    <canvas id="paint-canvas" width="460" height="210"></canvas>
+  </div>
+</div>
+
+<!-- Music -->
+<div class="window" id="win-music">
+  <div class="titlebar" onmousedown="startDrag(event,'win-music')">
+    <div class="title-left"><span class="title-dot"></span><span>Music Engine</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-music')"></button>
+      <button class="btn btn-max" onclick="maximize('win-music')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-music')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;gap:8px;">
+    <div id="music-controls">
+      <button onclick="startBackgroundLoop('cyber')" style="background:#22d3ee;color:#022c22;">Cyber</button>
+      <button onclick="startBackgroundLoop('soft')" style="background:#4b5563;color:#e5e7eb;">Soft</button>
+      <button onclick="startBackgroundLoop('retro')" style="background:#0f766e;color:#ecfeff;">Retro</button>
+      <button onclick="stopBackgroundLoop()" style="background:#ef4444;color:#fee2e2;">Stop</button>
+    </div>
+    <div id="music-status">Idle.</div>
+  </div>
+</div>
+
+<!-- Store -->
+<div class="window" id="win-store">
+  <div class="titlebar" onmousedown="startDrag(event,'win-store')">
+    <div class="title-left"><span class="title-dot"></span><span>Store</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-store')"></button>
+      <button class="btn btn-max" onclick="maximize('win-store')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-store')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;gap:8px;overflow:auto;">
+    <div style="font-size:12px;color:#9ca3af;">Downloads are fake but feel real.</div>
+
+    <div class="store-item" data-app="theme">
+      <div class="store-header">
+        <div class="store-icon">🎨</div>
+        <div><div class="store-title">Neon Theme</div><div class="store-desc">Glowing accent theme.</div></div>
+      </div>
+      <div class="store-footer">
+        <div class="store-progress"><div class="store-progress-inner"></div></div>
+        <button class="store-btn">Download</button>
+      </div>
+      <div class="store-desc" data-status>Not installed</div>
+    </div>
+
+    <div class="store-item" data-app="minigame">
+      <div class="store-header">
+        <div class="store-icon">🎮</div>
+        <div><div class="store-title">Orb Runner</div><div class="store-desc">Click the orb mini‑game.</div></div>
+      </div>
+      <div class="store-footer">
+        <div class="store-progress"><div class="store-progress-inner"></div></div>
+        <button class="store-btn">Download</button>
+      </div>
+      <div class="store-desc" data-status>Not installed</div>
+    </div>
+
+    <div class="store-item" data-app="musicpack">
+      <div class="store-header">
+        <div class="store-icon">🎵</div>
+        <div><div class="store-title">Music Pack</div><div class="store-desc">Extra patterns.</div></div>
+      </div>
+      <div class="store-footer">
+        <div class="store-progress"><div class="store-progress-inner"></div></div>
+        <button class="store-btn">Download</button>
+      </div>
+      <div class="store-desc" data-status>Not installed</div>
+    </div>
+
+    <div class="store-item" data-app="game3d">
+      <div class="store-header">
+        <div class="store-icon">🧊</div>
+        <div><div class="store-title">3D Cube</div><div class="store-desc">Rotating cube game.</div></div>
+      </div>
+      <div class="store-footer">
+        <div class="store-progress"><div class="store-progress-inner"></div></div>
+        <button class="store-btn">Download</button>
+      </div>
+      <div class="store-desc" data-status>Not installed</div>
+    </div>
+
+    <div style="font-size:12px;margin-top:6px;color:#9ca3af;">Community games</div>
+    <div id="store-community"></div>
+  </div>
+</div>
+
+<!-- Mini-game -->
+<div class="window" id="win-minigame">
+  <div class="titlebar" onmousedown="startDrag(event,'win-minigame')">
+    <div class="title-left"><span class="title-dot"></span><span>Orb Runner</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-minigame')"></button>
+      <button class="btn btn-max" onclick="maximize('win-minigame')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-minigame')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;gap:6px;">
+    <div style="font-size:12px;color:#9ca3af;">Click the orb before it moves.</div>
+    <div id="orb-area"><div id="orb"></div></div>
+    <div style="font-size:12px;">Score: <span id="orb-score">0</span></div>
+  </div>
+</div>
+
+<!-- 3D Game -->
+<div class="window" id="win-game3d">
+  <div class="titlebar" onmousedown="startDrag(event,'win-game3d')">
+    <div class="title-left"><span class="title-dot"></span><span>3D Cube</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-game3d')"></button>
+      <button class="btn btn-max" onclick="maximize('win-game3d')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-game3d')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;gap:6px;">
+    <div style="font-size:12px;color:#9ca3af;">Fake 3D cube using canvas.</div>
+    <canvas id="cube-canvas" width="460" height="230" style="background:#020617;border-radius:10px;border:1px solid #1f2937;"></canvas>
+  </div>
+</div>
+
+<!-- Files app -->
+<div class="window" id="win-files">
+  <div class="titlebar" onmousedown="startDrag(event,'win-files')">
+    <div class="title-left"><span class="title-dot"></span><span>Files</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-files')"></button>
+      <button class="btn btn-max" onclick="maximize('win-files')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-files')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;gap:6px;">
+    <div style="font-size:12px;color:#9ca3af;">Downloads and games. Dynexis folder is protected.</div>
+    <div id="files-list"></div>
+  </div>
+</div>
+
+<!-- Settings app -->
+<div class="window" id="win-settings">
+  <div class="titlebar" onmousedown="startDrag(event,'win-settings')">
+    <div class="title-left"><span class="title-dot"></span><span>Settings</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-settings')"></button>
+      <button class="btn btn-max" onclick="maximize('win-settings')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-settings')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;gap:10px;font-size:12px;">
+    <div style="width:120px;border-right:1px solid #1f2937;padding-right:6px;">
+      <div class="menu-item" onclick="settingsShow('appearance')">Appearance</div>
+      <div class="menu-item" onclick="settingsShow('sound')">Sound</div>
+      <div class="menu-item" onclick="settingsShow('system')">System</div>
+    </div>
+    <div style="flex:1;" id="settings-panel"></div>
+  </div>
+</div>
+
+<!-- Game Studio -->
+<div class="window" id="win-studio">
+  <div class="titlebar" onmousedown="startDrag(event,'win-studio')">
+    <div class="title-left"><span class="title-dot"></span><span>Game Studio</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-studio')"></button>
+      <button class="btn btn-max" onclick="maximize('win-studio')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-studio')"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;flex-direction:column;gap:6px;">
+    <div style="font-size:12px;color:#9ca3af;">Create simple games. They appear as icons and open with your HTML editor.</div>
+    <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
+      <label>Game name</label>
+      <input id="studio-name" type="text" style="padding:4px 8px;border-radius:8px;border:1px solid #1f2937;background:#020617;color:#e5e7eb;">
+      <label>Emoji icon</label>
+      <input id="studio-emoji" type="text" placeholder="🎮" style="padding:4px 8px;border-radius:8px;border:1px solid #1f2937;background:#020617;color:#e5e7eb;">
+      <label>Description</label>
+      <textarea id="studio-desc" style="height:60px;padding:4px 8px;border-radius:8px;border:1px solid #1f2937;background:#020617;color:#e5e7eb;"></textarea>
+      <button onclick="createStudioGame()" style="margin-top:4px;align-self:flex-start;padding:4px 10px;border-radius:999px;border:none;background:#22d3ee;color:#022c22;font-size:12px;cursor:pointer;">Create game</button>
+    </div>
+    <div style="font-size:12px;margin-top:4px;">Created games</div>
+    <div id="studio-list"></div>
+  </div>
+</div>
+
+<!-- Game Editor -->
+<div class="window" id="win-editor" style="display:none;">
+  <div class="titlebar" onmousedown="startDrag(event,'win-editor')">
+    <div class="title-left"><span class="title-dot"></span><span>Game Editor</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-editor')"></button>
+      <button class="btn btn-max" onclick="maximize('win-editor')"></button>
+      <button class="btn btn-close" onclick="attemptCloseEditor()"></button>
+    </div>
+  </div>
+  <div class="content" style="display:flex;gap:8px;">
+    <textarea id="editor-code" style="flex:1;background:#020617;color:#e5e7eb;border:1px solid #1f2937;border-radius:8px;padding:8px;">
+<!-- Write your HTML/CSS/JS game here -->
+<h1 style="color:white;text-align:center;">My Game</h1>
+<p style="color:white;text-align:center;">Edit this code to build your game.</p>
+    </textarea>
+    <iframe id="editor-preview" style="flex:1;background:white;border-radius:8px;border:1px solid #1f2937;"></iframe>
+  </div>
+</div>
+
+<!-- Publish dialog -->
+<div id="publish-dialog" style="
+  position:fixed;inset:0;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(15,23,42,0.75);backdrop-filter:blur(10px);
+  z-index:200;
+">
+  <div style="
+    background:#020617;border-radius:14px;
+    border:1px solid #22d3ee;
+    padding:14px 16px;width:260px;
+    font-size:13px;color:#e5e7eb;
+    box-shadow:0 20px 40px #000c;
+  ">
+    <div style="margin-bottom:8px;font-weight:600;">Publish game to Store?</div>
+    <div style="margin-bottom:10px;font-size:12px;color:#9ca3af;">
+      Do you want to put this game on the Dynexis Store so people can download it?
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="publishChoice(false)" style="
+        padding:4px 10px;border-radius:999px;border:none;
+        background:#4b5563;color:#e5e7eb;font-size:12px;cursor:pointer;
+      ">No</button>
+      <button onclick="publishChoice(true)" style="
+        padding:4px 10px;border-radius:999px;border:none;
+        background:#22d3ee;color:#022c22;font-size:12px;cursor:pointer;
+      ">Yes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Manager -->
+<div class="window" id="win-taskmgr">
+  <div class="titlebar" onmousedown="startDrag(event,'win-taskmgr')">
+    <div class="title-left"><span class="title-dot"></span><span>Task Manager</span></div>
+    <div class="window-buttons">
+      <button class="btn btn-min" onclick="minimize('win-taskmgr')"></button>
+      <button class="btn btn-max" onclick="maximize('win-taskmgr')"></button>
+      <button class="btn btn-close" onclick="closeWindow('win-taskmgr')"></button>
+    </div>
+  </div>
+  <div class="content" style="font-size:12px;">
+    <div style="margin-bottom:6px;color:#9ca3af;">Running windows</div>
+    <div id="taskmgr-list"></div>
+  </div>
+</div>
+
+<!-- Notifications -->
+<div id="notifications" style="
+  position:fixed;right:10px;bottom:60px;
+  display:flex;flex-direction:column;gap:6px;
+  z-index:300;
+"></div>
+
+<script>
+/* Persistent storage structures */
+let savedInstalledApps = JSON.parse(localStorage.getItem("dynexis_installed_apps") || "[]");
+let savedStudioGames = JSON.parse(localStorage.getItem("dynexis_studio_games") || "{}");
+let savedCommunityStore = JSON.parse(localStorage.getItem("dynexis_store_community") || "[]");
+
+function saveInstalledApps(){
+  localStorage.setItem("dynexis_installed_apps", JSON.stringify(savedInstalledApps));
+}
+function saveStudioGames(){
+  localStorage.setItem("dynexis_studio_games", JSON.stringify(savedStudioGames));
+}
+function saveCommunityStore(){
+  localStorage.setItem("dynexis_store_community", JSON.stringify(savedCommunityStore));
+}
+
+/* Storage */
+const gameCodeStorage = {};
+let currentEditingGame = null;
+const studioGamesMeta = {};
+const files = [
+  { id:"dynexis-core", name:"Dynexis", type:"System folder", protected:true }
+];
+
+/* Notifications */
+function showNotification(text, type){
+  const area=document.getElementById("notifications");
+  const box=document.createElement("div");
+  box.style.padding="6px 10px";
+  box.style.borderRadius="10px";
+  box.style.fontSize="12px";
+  box.style.background= type==="error" ? "#7f1d1d" : "#0f172a";
+  box.style.border="1px solid rgba(148,163,184,.7)";
+  box.style.color="#e5e7eb";
+  box.style.boxShadow="0 10px 25px #000c";
+  box.textContent=text;
+  area.appendChild(box);
+  setTimeout(()=>{box.style.opacity="0";box.style.transform="translateY(4px)";},2500);
+  setTimeout(()=>box.remove(),3000);
+}
+
+/* Start menu */
+const startBtn=document.getElementById("start-btn");
+const startMenu=document.getElementById("start-menu");
+startBtn.onclick=()=>toggleStart();
+function toggleStart(force){
+  startMenu.style.display=
+    typeof force==="boolean"
+      ? (force?"block":"none")
+      : (startMenu.style.display==="block"?"none":"block");
+}
+document.addEventListener("click",e=>{
+  if(!startMenu.contains(e.target)&&e.target!==startBtn)toggleStart(false);
+});
+
+/* Windows + taskbar */
+const taskbarApps=document.getElementById("taskbar-apps");
+function openWindow(name){
+  const win=document.getElementById("win-"+name);
+  if(!win)return;
+  win.style.display="block";
+  win.style.zIndex=Date.now();
+  const tb=document.getElementById("tb-win-"+name);
+  if(tb)tb.remove();
+}
+function closeWindow(id){
+  const win=document.getElementById(id);
+  if(!win)return;
+  win.style.display="none";
+  const tb=document.getElementById("tb-"+id);
+  if(tb)tb.remove();
+}
+function minimize(id){
+  const win=document.getElementById(id);
+  if(!win)return;
+  win.style.display="none";
+  let tb=document.getElementById("tb-"+id);
+  if(!tb){
+    tb=document.createElement("button");
+    tb.id="tb-"+id;
+    tb.className="tb-app";
+    const dot=document.createElement("span");
+    dot.className="tb-dot";
+    const label=document.createElement("span");
+    label.textContent=win.querySelector(".title-left span:nth-child(2)").textContent;
+    tb.appendChild(dot);tb.appendChild(label);
+    tb.onclick=()=>{win.style.display="block";win.style.zIndex=Date.now();tb.remove();};
+    taskbarApps.appendChild(tb);
+  }
+}
+function maximize(id){
+  const win=document.getElementById(id);
+  if(!win)return;
+  if(win.classList.contains("maximized")){
+    win.classList.remove("maximized");
+    win.style.top="90px";
+    win.style.left="140px";
+    win.style.width="520px";
+    win.style.height="320px";
+  }else{
+    win.classList.add("maximized");
+    win.style.top="0";
+    win.style.left="0";
+    win.style.width="100vw";
+    win.style.height="100vh";
+  }
+  win.style.zIndex=Date.now();
+}
+
+/* Dragging */
+let drag=null;
+function startDrag(e,id){
+  const win=document.getElementById(id);
+  if(!win)return;
+  if(win.classList.contains("maximized"))return;
+  drag={id,offX:e.clientX-win.offsetLeft,offY:e.clientY-win.offsetTop};
+  document.onmousemove=dragMove;
+  document.onmouseup=()=>{drag=null;document.onmousemove=null;};
+}
+function dragMove(e){
+  if(!drag)return;
+  const win=document.getElementById(drag.id);
+  win.style.left=(e.clientX-drag.offX)+"px";
+  win.style.top=(e.clientY-drag.offY)+"px";
+  win.style.zIndex=Date.now();
+}
+
+/* Clock */
+setInterval(()=>{document.getElementById("clock").textContent=new Date().toLocaleTimeString();},1000);
+
+/* Notes */
+const NOTES_KEY="dynexis_notes";
+const notesArea=document.getElementById("notes-area");
+notesArea.value=localStorage.getItem(NOTES_KEY)||"";
+notesArea.oninput=()=>localStorage.setItem(NOTES_KEY,notesArea.value);
+
+/* Browser */
+const browserFrame=document.getElementById("browser-frame");
+browserFrame.srcdoc=`<html><body style="font-family:system-ui;background:#020617;color:#e5e7eb;padding:10px;">
+<h3>Dynexis Browser</h3><p>Type a URL or search term above.</p></body></html>`;
+function browserGo(){
+  const input=document.getElementById("browser-url");
+  let text=input.value.trim();
+  if(!text)return;
+  if(/^https?:\/\//i.test(text)||text.includes(".")){
+    if(!/^https?:\/\//i.test(text))text="https://"+text;
+    browserFrame.src=text;
+  }else{
+    const q=encodeURIComponent(text);
+    browserFrame.src="https://www.bing.com/search?q="+q;
+  }
+}
+
+/* Paint */
+const paintCanvas=document.getElementById("paint-canvas");
+const paintCtx=paintCanvas.getContext("2d");
+let painting=false;
+function startPaint(e){painting=true;drawPaint(e);}
+function endPaint(){painting=false;paintCtx.beginPath();}
+function drawPaint(e){
+  if(!painting)return;
+  const rect=paintCanvas.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  const y=e.clientY-rect.top;
+  paintCtx.lineWidth=document.getElementById("paint-size").value;
+  paintCtx.lineCap="round";
+  paintCtx.strokeStyle=document.getElementById("paint-color").value;
+  paintCtx.lineTo(x,y);
+  paintCtx.stroke();
+  paintCtx.beginPath();
+  paintCtx.moveTo(x,y);
+}
+paintCanvas.addEventListener("mousedown",startPaint);
+paintCanvas.addEventListener("mouseup",endPaint);
+paintCanvas.addEventListener("mouseleave",endPaint);
+paintCanvas.addEventListener("mousemove",drawPaint);
+function paintClear(){paintCtx.clearRect(0,0,paintCanvas.width,paintCanvas.height);}
+
+/* Music engine */
+let audioCtx=null,masterGain=null,bgLoopInterval=null,musicPackUnlocked=false,musicEnabled=true;
+function ensureAudio(){
+  if(!audioCtx){
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    masterGain=audioCtx.createGain();
+    masterGain.gain.value=0.7;
+    masterGain.connect(audioCtx.destination);
+  }
+}
+function playShortNote(freq,offset,dur,vol,type){
+  ensureAudio();
+  const t=audioCtx.currentTime+offset;
+  const osc=audioCtx.createOscillator();
+  const gain=audioCtx.createGain();
+  osc.type=type||"sine";
+  osc.frequency.value=freq;
+  gain.gain.setValueAtTime(vol,t);
+  gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  osc.connect(gain);gain.connect(masterGain);
+  osc.start(t);osc.stop(t+dur);
+}
+function schedulePattern(kind){
+  if(!musicEnabled)return;
+  if(kind==="cyber"){
+    const base=220;
+    playShortNote(base,0,0.25,0.25,"triangle");
+    playShortNote(base*1.25,0.25,0.25,0.25,"triangle");
+    playShortNote(base*1.5,0.5,0.25,0.25,"triangle");
+    playShortNote(base*2,0.75,0.4,0.25,"triangle");
+  }else if(kind==="soft"){
+    playShortNote(261.6,0,0.4,0.18,"sine");
+    playShortNote(329.6,0.4,0.4,0.18,"sine");
+    playShortNote(392,0.8,0.4,0.18,"sine");
+    playShortNote(523.3,1.2,0.6,0.16,"sine");
+  }else if(kind==="retro"){
+    playShortNote(800,0,0.12,0.22,"square");
+    playShortNote(900,0.18,0.12,0.22,"square");
+    playShortNote(700,0.36,0.12,0.22,"square");
+    playShortNote(600,0.54,0.18,0.2,"square");
+  }else if(kind==="extra1"&&musicPackUnlocked){
+    playShortNote(440,0,0.3,0.22,"sawtooth");
+    playShortNote(660,0.3,0.3,0.22,"sawtooth");
+    playShortNote(550,0.6,0.3,0.22,"sawtooth");
+  }
+}
+function startBackgroundLoop(kind){
+  stopBackgroundLoop();
+  schedulePattern(kind);
+  bgLoopInterval=setInterval(()=>schedulePattern(kind),1800);
+  document.getElementById("music-status").textContent="Looping: "+kind;
+}
+function stopBackgroundLoop(){
+  if(bgLoopInterval){clearInterval(bgLoopInterval);bgLoopInterval=null;}
+  if(audioCtx)audioCtx.suspend().catch(()=>{});
+  document.getElementById("music-status").textContent="Idle.";
+}
+
+/* Monitor stats */
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function updateStats(){
+  const cpu=rand(5,87),ram=rand(20,92);
+  document.getElementById("cpu-val").textContent=cpu+"%";
+  document.getElementById("ram-val").textContent=ram+"%";
+  const netStates=["Idle","Syncing","Online","Low Latency","Packet Loss"];
+  document.getElementById("net-val").textContent=netStates[rand(0,netStates.length-1)];
+  const coreStates=["Online","Stable","Optimizing","Cooling","Overclocked"];
+  document.getElementById("core-val").textContent=coreStates[rand(0,coreStates.length-1)];
+  document.getElementById("qs-cpu").textContent="CPU: "+cpu+"%";
+  document.getElementById("qs-ram").textContent="RAM: "+ram+"%";
+}
+setInterval(updateStats,2000);updateStats();
+
+/* Files */
+function addFile(entry){
+  files.push(entry);
+  renderFiles();
+}
+
+/* Store built-in items */
+const storeItems=document.querySelectorAll(".store-item");
+storeItems.forEach(item=>{
+  const btn=item.querySelector(".store-btn");
+  const bar=item.querySelector(".store-progress-inner");
+  const status=item.querySelector("[data-status]");
+  const app=item.getAttribute("data-app");
+  btn.addEventListener("click",()=>{
+    if(btn.disabled)return;
+    btn.disabled=true;btn.textContent="Downloading…";status.textContent="Downloading…";bar.style.width="0%";
+    const totalMs=10000+Math.floor(Math.random()*5000);
+    const start=performance.now();
+    function step(now){
+      const elapsed=now-start;
+      const pct=Math.min(100,Math.floor((elapsed/totalMs)*100));
+      bar.style.width=pct+"%";
+      if(elapsed<totalMs)requestAnimationFrame(step);
+      else{
+        bar.style.width="100%";
+        btn.textContent="Installed";
+        status.textContent="Installed";
+        if(!savedInstalledApps.includes(app)){
+          savedInstalledApps.push(app);
+          saveInstalledApps();
+        }
+        onAppInstalled(app);
+        showNotification("Installed "+item.querySelector(".store-title").textContent);
+      }
+    }
+    requestAnimationFrame(step);
+  });
+});
+
+/* Install apps */
+function onAppInstalled(app){
+  if(app==="theme"){
+    setTheme("neon");
+    addFile({id:"theme-neon",name:"Neon Theme",type:"Theme",protected:false,open:()=>openWindow("store")});
+  }else if(app==="minigame"){
+    const container=document.getElementById("minigame-icon-container");
+    if(!document.getElementById("minigame-icon")){
+      const icon=document.createElement("div");
+      icon.className="icon";icon.id="minigame-icon";
+      icon.onclick=()=>openWindow("minigame");
+      icon.innerHTML='<div>🎮</div><span>Orb Runner</span>';
+      container.appendChild(icon);
+    }
+    addFile({id:"orb-runner",name:"Orb Runner",type:"Game",protected:false,open:()=>openWindow("minigame")});
+  }else if(app==="musicpack"){
+    musicPackUnlocked=true;
+    document.getElementById("music-status").textContent="Music pack installed.";
+    addFile({id:"music-pack",name:"Music Pack",type:"Audio pack",protected:false,open:()=>openWindow("music")});
+  }else if(app==="game3d"){
+    const container=document.getElementById("minigame-icon-container");
+    if(!document.getElementById("game3d-icon")){
+      const icon=document.createElement("div");
+      icon.className="icon";icon.id="game3d-icon";
+      icon.onclick=()=>openWindow("game3d");
+      icon.innerHTML='<div>🧊</div><span>3D Cube</span>';
+      container.appendChild(icon);
+    }
+    initCubeGame();
+    addFile({id:"cube-3d",name:"3D Cube",type:"Game",protected:false,open:()=>openWindow("game3d")});
+  }
+}
+
+/* Mini-game */
+const orb=document.getElementById("orb");
+const orbArea=document.getElementById("orb-area");
+const orbScoreEl=document.getElementById("orb-score");
+let orbScore=0;
+function moveOrb(){
+  const rect=orbArea.getBoundingClientRect();
+  const size=26;
+  const x=Math.random()*(rect.width-size);
+  const y=Math.random()*(rect.height-size);
+  orb.style.left=x+"px";orb.style.top=y+"px";
+}
+orb.addEventListener("click",()=>{
+  orbScore++;orbScoreEl.textContent=orbScore;moveOrb();
+});
+setInterval(moveOrb,1500);
+
+/* 3D cube */
+function initCubeGame(){
+  const canvas=document.getElementById("cube-canvas");
+  if(!canvas)return;
+  const ctx=canvas.getContext("2d");
+  const w=canvas.width,h=canvas.height;
+  let angle=0;
+  const cube=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+  const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  function project([x,y,z]){
+    const dist=3,scale=120,z2=z+dist;
+    return [(x/z2)*scale+w/2,(y/z2)*scale+h/2];
+  }
+  function rotateY([x,y,z],a){
+    const c=Math.cos(a),s=Math.sin(a);
+    return [x*c+z*s,y,-x*s+z*c];
+  }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    ctx.strokeStyle="#22d3ee";ctx.lineWidth=2;
+    const t=cube.map(v=>rotateY(v,angle));
+    ctx.beginPath();
+    edges.forEach(([i,j])=>{
+      const [x1,y1]=project(t[i]);
+      const [x2,y2]=project(t[j]);
+      ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+    });
+    ctx.stroke();
+    angle+=0.02;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+/* Game editor */
+function openEditorWithCode(initialCode){
+  const editor=document.getElementById("win-editor");
+  const codeBox=document.getElementById("editor-code");
+  const preview=document.getElementById("editor-preview");
+  codeBox.value=initialCode||"<h1>New Game</h1>";
+  preview.srcdoc=codeBox.value;
+  codeBox.oninput=()=>{
+    preview.srcdoc=codeBox.value;
+    if(currentEditingGame){
+      gameCodeStorage[currentEditingGame]=codeBox.value;
+      if(savedStudioGames[currentEditingGame]){
+        savedStudioGames[currentEditingGame].code = codeBox.value;
+        saveStudioGames();
+      }
+      const frame=document.getElementById("frame-"+currentEditingGame);
+      if(frame)frame.srcdoc=gameCodeStorage[currentEditingGame];
+    }
+  };
+  editor.style.display="block";
+  editor.style.zIndex=Date.now();
+}
+
+/* Publish dialog logic */
+const publishDialog=document.getElementById("publish-dialog");
+function attemptCloseEditor(){
+  if(!currentEditingGame){
+    closeWindow("win-editor");
+    return;
+  }
+  publishDialog.style.display="flex";
+}
+function publishChoice(yes){
+  publishDialog.style.display="none";
+  if(yes && currentEditingGame){
+    if(!savedCommunityStore.includes(currentEditingGame)){
+      savedCommunityStore.push(currentEditingGame);
+      saveCommunityStore();
+    }
+    publishGameToStore(currentEditingGame);
+  }
+  closeWindow("win-editor");
+}
+
+/* Install community game like normal app */
+function installCommunityGame(gameId){
+  const meta=studioGamesMeta[gameId];
+  if(!meta)return;
+
+  if(!document.getElementById("icon-"+gameId)){
+    const container=document.getElementById("minigame-icon-container");
+    const icon=document.createElement("div");
+    icon.className="icon";
+    icon.id="icon-"+gameId;
+    icon.innerHTML=`<div>${meta.emoji}</div><span>${meta.name}</span>`;
+    icon.onclick=()=>{
+      currentEditingGame=gameId;
+      openEditorWithCode(gameCodeStorage[gameId]);
+    };
+    container.appendChild(icon);
+  }
+
+  if(!files.find(f=>f.id===gameId)){
+    addFile({
+      id:gameId,
+      name:meta.name,
+      type:"Game (Community)",
+      protected:false,
+      open:()=>{
+        currentEditingGame=gameId;
+        openEditorWithCode(gameCodeStorage[gameId]);
+      }
+    });
+  }
+}
+
+/* Publish game to Store (community section) */
+function publishGameToStore(gameId){
+  const meta=studioGamesMeta[gameId];
+  if(!meta)return;
+  const community=document.getElementById("store-community");
+  if(!community)return;
+  if(document.getElementById("store-item-"+gameId))return;
+
+  const item=document.createElement("div");
+  item.className="store-item";
+  item.id="store-item-"+gameId;
+  item.innerHTML=`
+    <div class="store-header">
+      <div class="store-icon">${meta.emoji}</div>
+      <div>
+        <div class="store-title">${meta.name}</div>
+        <div class="store-desc">Community game – created in HTML Game Studio.</div>
+      </div>
+    </div>
+    <div class="store-footer">
+      <div class="store-progress"><div class="store-progress-inner"></div></div>
+      <button class="store-btn">Download</button>
+    </div>
+    <div class="store-desc" data-status>Available on Store</div>
+  `;
+
+  const btn=item.querySelector(".store-btn");
+  const bar=item.querySelector(".store-progress-inner");
+  const status=item.querySelector("[data-status]");
+
+  btn.addEventListener("click",()=>{
+    if(btn.disabled)return;
+    btn.disabled=true;
+    btn.textContent="Downloading…";
+    status.textContent="Downloading…";
+    bar.style.width="0%";
+
+    const totalMs=6000;
+    const start=performance.now();
+    function step(now){
+      const elapsed=now-start;
+      const pct=Math.min(100,Math.floor((elapsed/totalMs)*100));
+      bar.style.width=pct+"%";
+      if(elapsed<totalMs){
+        requestAnimationFrame(step);
+      }else{
+        bar.style.width="100%";
+        btn.textContent="Installed";
+        status.textContent="Installed";
+
+        installCommunityGame(gameId);
+        showNotification(meta.name+" has been installed.");
+      }
+    }
+    requestAnimationFrame(step);
+  });
+
+  community.appendChild(item);
+}
+
+/* Game Studio */
+function createStudioGame(){
+  const nameInput=document.getElementById("studio-name");
+  const emojiInput=document.getElementById("studio-emoji");
+  const descInput=document.getElementById("studio-desc");
+  const list=document.getElementById("studio-list");
+  const name=nameInput.value.trim();
+  if(!name)return;
+  const emoji=(emojiInput.value.trim()||"🎮").slice(0,2);
+  const desc=descInput.value.trim()||"Custom game.";
+  const id="studio_"+Date.now();
+
+  studioGamesMeta[id]={name,desc,emoji};
+
+  const container=document.getElementById("minigame-icon-container");
+  const icon=document.createElement("div");
+  icon.className="icon";
+  icon.id="icon-"+id;
+  icon.innerHTML=`<div>${emoji}</div><span>${name}</span>`;
+  container.appendChild(icon);
+
+  const win=document.createElement("div");
+  win.className="window";
+  win.id="win-"+id;
+  win.innerHTML=`
+    <div class="titlebar" onmousedown="startDrag(event,'win-${id}')">
+      <div class="title-left"><span class="title-dot"></span><span>${name}</span></div>
+      <div class="window-buttons">
+        <button class="btn btn-min" onclick="minimize('win-${id}')"></button>
+        <button class="btn btn-max" onclick="maximize('win-${id}')"></button>
+        <button class="btn btn-close" onclick="closeWindow('win-${id}')"></button>
+      </div>
+    </div>
+    <div class="content" style="padding:0;">
+      <iframe id="frame-${id}" style="width:100%;height:100%;border:none;background:white;"></iframe>
+    </div>`;
+  document.body.appendChild(win);
+
+  const defaultCode=`
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${name}</title>
+<style>
+  body{background:#020617;color:white;font-family:system-ui;text-align:center;padding-top:40px;}
+  button{padding:8px 16px;border-radius:999px;border:none;background:#22d3ee;color:#022c22;cursor:pointer;}
+</style>
+</head>
+<body>
+<h1>${name}</h1>
+<p>${desc}</p>
+<p>Edit this HTML to build your game.</p>
+<button onclick="alert('You clicked in your game!')">Click me</button>
+</body>
+</html>`.trim();
+
+  gameCodeStorage[id]=defaultCode;
+  savedStudioGames[id]={name,desc,emoji,code:defaultCode};
+  saveStudioGames();
+
+  const frame=document.getElementById("frame-"+id);
+  frame.srcdoc=gameCodeStorage[id];
+
+  icon.onclick=()=>{
+    currentEditingGame=id;
+    openEditorWithCode(gameCodeStorage[id]);
+  };
+
+  const item=document.createElement("div");
+  item.className="studio-item";
+  item.textContent=`${emoji} ${name} – ${desc}`;
+  list.appendChild(item);
+
+  nameInput.value="";emojiInput.value="";descInput.value="";
+
+  currentEditingGame=id;
+  openEditorWithCode(gameCodeStorage[id]);
+
+  addFile({
+    id:id,
+    name:name,
+    type:"Game (Studio)",
+    protected:false,
+    open:()=>{
+      currentEditingGame=id;
+      openEditorWithCode(gameCodeStorage[id]);
+    }
+  });
+}
+
+/* Files app rendering */
+function renderFiles(){
+  const list=document.getElementById("files-list");
+  if(!list)return;
+  list.innerHTML="";
+  files.forEach(f=>{
+    const row=document.createElement("div");
+    row.className="file-row";
+    const main=document.createElement("div");
+    main.className="file-main";
+    const icon=document.createElement("span");
+    icon.textContent=f.protected?"🛡️":"📄";
+    const name=document.createElement("span");
+    name.className="file-name";
+    name.textContent=f.name;
+    const type=document.createElement("span");
+    type.className="file-type";
+    type.textContent=f.type;
+    main.appendChild(icon);
+    main.appendChild(name);
+    main.appendChild(type);
+    row.appendChild(main);
+
+    const actions=document.createElement("div");
+    actions.className="file-actions";
+
+    if(!f.protected){
+      const openBtn=document.createElement("button");
+      openBtn.textContent="Open";
+      openBtn.style.background="#22c55e";
+      openBtn.style.color="#022c22";
+      openBtn.onclick=()=>{if(f.open)f.open();};
+      actions.appendChild(openBtn);
+
+      const delBtn=document.createElement("button");
+      delBtn.textContent="Uninstall";
+      delBtn.onclick=()=>{
+        if(confirm("Uninstall "+f.name+"?")){
+          const iconEl=document.getElementById("icon-"+f.id) || document.getElementById(f.id+"-icon");
+          if(iconEl)iconEl.remove();
+          const storeItem=document.getElementById("store-item-"+f.id);
+          if(storeItem)storeItem.remove();
+          const idx=files.findIndex(x=>x.id===f.id);
+          if(idx>0){files.splice(idx,1);renderFiles();}
+          savedInstalledApps = savedInstalledApps.filter(x=>x!==f.id);
+          saveInstalledApps();
+          showNotification(f.name+" uninstalled");
+        }
+      };
+      actions.appendChild(delBtn);
+    }else{
+      const prot=document.createElement("span");
+      prot.textContent="Protected";
+      prot.style.fontSize="10px";
+      prot.style.color="#f97316";
+      actions.appendChild(prot);
+      row.onclick=()=>showNotification("Dynexis is a protected system folder. You can't open or delete it.","error");
+    }
+
+    row.appendChild(actions);
+    list.appendChild(row);
+  });
+}
+renderFiles();
+
+/* Quick settings */
+const qsBtn=document.getElementById("quick-settings-btn");
+const qsPanel=document.getElementById("quick-settings-panel");
+qsBtn.onclick=()=>{qsPanel.classList.toggle("active");};
+document.addEventListener("click",e=>{
+  if(!qsPanel.contains(e.target)&&e.target!==qsBtn)qsPanel.classList.remove("active");
+});
+
+/* Wi-Fi */
+const wifiToggle=document.getElementById("wifi-toggle");
+let wifiOn=true;
+wifiToggle.onclick=()=>{
+  wifiOn=!wifiOn;
+  wifiToggle.textContent="Wi‑Fi: "+(wifiOn?"ON":"OFF");
+};
+
+/* Music toggle */
+const musicToggle=document.getElementById("music-toggle");
+musicToggle.onclick=()=>{
+  musicEnabled=!musicEnabled;
+  musicToggle.textContent="Background Music: "+(musicEnabled?"ON":"OFF");
+  if(!musicEnabled)stopBackgroundLoop();
+};
+
+/* Volume */
+const volumeSlider=document.getElementById("volume-slider");
+volumeSlider.oninput=()=>{
+  const v=volumeSlider.value/100;
+  if(masterGain)masterGain.gain.value=v;
+};
+
+/* Theme + custom background */
+function setTheme(mode){
+  let bg;
+  if(mode==="default"){
+    bg="radial-gradient(circle at top,#22d3ee 0,#020617 45%,#000 100%)";
+  }else if(mode==="neon"){
+    bg="radial-gradient(circle at top,#22d3ee 0,#020617 35%,#020617 60%,#4c1d95 100%)";
+  }else if(mode==="darkcore"){
+    bg="radial-gradient(circle at top,#0f172a 0,#020617 40%,#000 100%)";
+  }
+  if(bg){
+    document.body.style.background=bg;
+    localStorage.setItem("dynexis_background", bg);
+    localStorage.removeItem("dynexis_custom_bg");
+  }
+}
+const customBgBtn=document.getElementById("custom-bg-btn");
+const bgInput=document.getElementById("bg-file-input");
+customBgBtn.onclick=()=>bgInput.click();
+bgInput.onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const url=ev.target.result;
+    document.body.style.background=`url('${url}') center/cover no-repeat fixed`;
+    localStorage.setItem("dynexis_custom_bg", url);
+  };
+  reader.readAsDataURL(file);
+};
+
+/* Settings app logic */
+function settingsShow(section){
+  const panel=document.getElementById("settings-panel");
+  if(!panel)return;
+  if(section==="appearance"){
+    panel.innerHTML=`
+      <h3 style="margin-bottom:6px;">Appearance</h3>
+      <p style="color:#9ca3af;margin-bottom:6px;">Change theme and background.</p>
+      <button onclick="setTheme('default')" class="store-btn">Default</button>
+      <button onclick="setTheme('neon')" class="store-btn">Neon</button>
+      <button onclick="setTheme('darkcore')" class="store-btn">Dark Core</button>
+      <button onclick="document.getElementById('bg-file-input').click()" class="store-btn">Custom image…</button>
+    `;
+  }else if(section==="sound"){
+    panel.innerHTML=`
+      <h3 style="margin-bottom:6px;">Sound</h3>
+      <p style="color:#9ca3af;margin-bottom:6px;">Background music and volume.</p>
+      <button onclick="musicEnabled=!musicEnabled;showNotification('Music '+(musicEnabled?'enabled':'disabled'))" class="store-btn">
+        Toggle music
+      </button>
+      <p style="margin-top:6px;">Volume</p>
+      <input type="range" min="0" max="100" value="${Math.round((masterGain?masterGain.gain.value:0.7)*100)}"
+        oninput="if(masterGain)masterGain.gain.value=this.value/100;">
+    `;
+  }else if(section==="system"){
+    panel.innerHTML=`
+      <h3 style="margin-bottom:6px;">System</h3>
+      <p style="color:#9ca3af;">Dynexis OS – demo environment.</p>
+      <p>CPU / RAM stats are simulated.</p>
+    `;
+  }
+}
+
+/* Shutdown + boot */
+const shutdownBtn=document.getElementById("shutdown-btn");
+const shutdownScreen=document.getElementById("shutdown-screen");
+const shutdownLines=document.getElementById("shutdown-lines");
+const bootScreen=document.getElementById("boot-screen");
+shutdownBtn.onclick=runShutdown;
+function runShutdown(){
+  qsPanel.classList.remove("active");
+  shutdownScreen.style.opacity="0";
+  shutdownScreen.style.pointerEvents="auto";
+  shutdownScreen.style.animation="shutdownFade .6s forwards";
+  shutdownLines.style.animation="shutdownLines .6s forwards";
+  setTimeout(()=>{
+    shutdownScreen.style.animation="";
+    shutdownLines.style.animation="";
+    shutdownScreen.style.pointerEvents="none";
+    shutdownScreen.style.opacity="0";
+    bootScreen.style.display="flex";
+    setTimeout(()=>finishBoot(),2000);
+  },800);
+}
+function finishBoot(){bootScreen.style.display="none";}
+
+/* FIRST-TIME PASSWORD SETUP + LOGIN */
+let savedPass = localStorage.getItem("dynexis_password");
+
+window.addEventListener("load", () => {
+  if (!savedPass) {
+    document.getElementById("setup-screen").style.display = "flex";
+    document.getElementById("login-screen").style.display = "none";
+  } else {
+    document.getElementById("setup-screen").style.display = "none";
+    document.getElementById("login-screen").style.display = "flex";
+  }
+});
+
+function finishSetup(){
+  const p1 = document.getElementById("setup-pass1").value;
+  const p2 = document.getElementById("setup-pass2").value;
+  const err = document.getElementById("setup-error");
+
+  if(p1.length < 3){
+    err.textContent = "Password must be at least 3 characters.";
+    return;
+  }
+  if(p1 !== p2){
+    err.textContent = "Passwords do not match.";
+    return;
+  }
+
+  localStorage.setItem("dynexis_password", p1);
+  savedPass = p1;
+
+  document.getElementById("setup-screen").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+
+  showNotification("Password created");
+}
+
+function loginAttempt(){
+  const input=document.getElementById("login-password");
+  const err=document.getElementById("login-error");
+  const saved = localStorage.getItem("dynexis_password");
+
+  if(input.value === saved){
+    document.getElementById("login-screen").style.display="none";
+    document.getElementById("desktop").style.pointerEvents="auto";
+    document.getElementById("taskbar").style.pointerEvents="auto";
+    showNotification("Welcome, Luca");
+  }else{
+    err.textContent="Wrong password.";
+  }
+}
+
+/* Task Manager */
+function refreshTaskManager(){
+  const list=document.getElementById("taskmgr-list");
+  if(!list)return;
+  list.innerHTML="";
+  document.querySelectorAll(".window").forEach(win=>{
+    if(win.style.display==="none")return;
+    const id=win.id;
+    const title=win.querySelector(".title-left span:nth-child(2)").textContent;
+    const row=document.createElement("div");
+    row.style.display="flex";
+    row.style.justifyContent="space-between";
+    row.style.alignItems="center";
+    row.style.padding="4px 6px";
+    row.style.borderRadius="6px";
+    row.style.marginBottom="4px";
+    row.innerHTML=`<span>${title}</span>`;
+    const btn=document.createElement("button");
+    btn.textContent="End task";
+    btn.style.padding="2px 8px";
+    btn.style.borderRadius="999px";
+    btn.style.border="none";
+    btn.style.background="#ef4444";
+    btn.style.color="#fee2e2";
+    btn.style.fontSize="10px";
+    btn.style.cursor="pointer";
+    btn.onclick=()=>{
+      closeWindow(id);
+      refreshTaskManager();
+      showNotification("Closed "+title);
+    };
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
+setInterval(refreshTaskManager,1500);
+
+/* Restore saved theme/background */
+(function restoreBackground(){
+  const customBG = localStorage.getItem("dynexis_custom_bg");
+  const bg = localStorage.getItem("dynexis_background");
+  if(customBG){
+    document.body.style.background=`url('${customBG}') center/cover no-repeat fixed`;
+  }else if(bg){
+    document.body.style.background=bg;
+  }
+})();
+
+/* Restore studio games and community store */
+(function restoreStudioGames(){
+  Object.keys(savedStudioGames).forEach(id=>{
+    const g=savedStudioGames[id];
+    studioGamesMeta[id]={name:g.name,desc:g.desc,emoji:g.emoji};
+    gameCodeStorage[id]=g.code;
+    installCommunityGame(id);
+  });
+})();
+(function restoreCommunityStore(){
+  savedCommunityStore.forEach(id=>{
+    if(studioGamesMeta[id])publishGameToStore(id);
+  });
+})();
+
+/* Restore installed apps */
+(function restoreInstalledApps(){
+  savedInstalledApps.forEach(app=>{
+    onAppInstalled(app);
+  });
+})();
+
+/* Initial boot */
+window.addEventListener("load",()=>{
+  document.getElementById("clock").textContent=new Date().toLocaleTimeString();
+  moveOrb();
+  setTimeout(finishBoot,2000);
+  settingsShow('appearance');
+  document.getElementById("desktop").style.pointerEvents="none";
+  document.getElementById("taskbar").style.pointerEvents="none";
+});
+</script>
+
+</body>
+</html>
