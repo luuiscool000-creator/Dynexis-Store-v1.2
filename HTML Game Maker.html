@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HTML Game Maker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #1e1e1e;
+      color: #f0f0f0;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    .container {
+      display: flex;
+      gap: 16px;
+      height: calc(100vh - 80px);
+    }
+    .left, .right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    textarea {
+      flex: 1;
+      width: 100%;
+      resize: none;
+      background: #111;
+      color: #f0f0f0;
+      border: 1px solid #444;
+      padding: 8px;
+      font-family: Consolas, monospace;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    iframe {
+      flex: 1;
+      width: 100%;
+      border: 1px solid #444;
+      background: #fff;
+    }
+    .buttons {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+    }
+    button {
+      padding: 8px 14px;
+      border: none;
+      cursor: pointer;
+      background: #3b82f6;
+      color: white;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+  <h1>HTML Game Maker</h1>
+  <p>Write your HTML game code below, then click <b>Try</b> or <b>Download HTML</b>.</p>
+
+  <div class="container">
+    <div class="left">
+      <textarea id="code" placeholder="Write your HTML game code here...">
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Game</title>
+</head>
+<body>
+  <h1>My First HTML Game</h1>
+  <p>Change this code to build your game!</p>
+</body>
+</html>
+      </textarea>
+      <div class="buttons">
+        <button id="tryBtn">Try</button>
+        <button id="downloadBtn">Download HTML</button>
+      </div>
+    </div>
+    <div class="right">
+      <iframe id="preview"></iframe>
+    </div>
+  </div>
+
+  <script>
+    const codeEl = document.getElementById('code');
+    const previewEl = document.getElementById('preview');
+    const tryBtn = document.getElementById('tryBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    // Run the HTML in the iframe
+    tryBtn.addEventListener('click', () => {
+      const doc = previewEl.contentDocument || previewEl.contentWindow.document;
+      doc.open();
+      doc.write(codeEl.value);
+      doc.close();
+    });
+
+    // Download the HTML as a file
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([codeEl.value], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'game.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Auto-run initial content
+    window.addEventListener('load', () => {
+      tryBtn.click();
+    });
+  </script>
+</body>
+</html>
