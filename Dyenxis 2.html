@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dynexis OS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,Segoe UI,sans-serif;user-select:none}
+body{overflow:hidden;background:#020617}
+#desktop{position:fixed;inset:0;background:#111;color:#fff;background-size:cover;background-position:center}
+.icon{position:absolute;width:72px;text-align:center;cursor:pointer;color:#fff;font-size:12px}
+.icon img{width:48px;height:48px;margin-bottom:4px}
+#taskbar{position:absolute;left:0;right:0;bottom:0;height:40px;background:rgba(10,10,10,.9);display:flex;align-items:center;padding:0 8px;gap:8px}
+#start-btn{background:#2563eb;border:none;color:#fff;padding:6px 12px;border-radius:999px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
+#start-btn span{font-weight:600}
+#taskbar-apps{display:flex;gap:4px;margin-left:8px;flex:1}
+.task-btn{background:rgba(255,255,255,.08);border:none;color:#fff;padding:4px 10px;border-radius:999px;cursor:pointer;font-size:13px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#clock{font-size:13px;opacity:.8}
+.window{position:absolute;width:900px;height:550px;background:#1e1e1e;border-radius:10px;border:1px solid #333;display:flex;flex-direction:column;box-shadow:0 18px 40px rgba(0,0,0,.7);overflow:hidden}
+.window-header{height:34px;background:linear-gradient(90deg,#111827,#020617);display:flex;align-items:center;padding:0 10px;cursor:move}
+.window-title{flex:1;color:#e5e7eb;font-size:13px;font-weight:500}
+.window-controls{display:flex;gap:6px}
+.window-btn{width:14px;height:14px;border-radius:50%;border:none;cursor:pointer}
+.btn-close{background:#ff5f57}
+.btn-min{background:#ffbd2e}
+.btn-max{background:#28c840}
+.window-body{flex:1;background:#111827;color:#e5e7eb;font-size:13px;overflow:hidden}
+#start-menu{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);width:420px;height:360px;background:rgba(15,23,42,.96);border-radius:18px;border:1px solid rgba(148,163,184,.4);display:none;flex-direction:column;padding:12px;color:#fff;box-shadow:0 18px 45px rgba(0,0,0,.8);backdrop-filter:blur(18px)}
+#startSearch{width:100%;padding:7px 10px;margin-bottom:10px;background:#020617;border-radius:999px;border:1px solid #4b5563;color:#e5e7eb;font-size:13px}
+#startApps{overflow-y:auto;flex:1;font-size:13px}
+.start-app-btn{width:100%;padding:7px 9px;margin:3px 0;background:rgba(15,23,42,.9);border-radius:10px;border:1px solid rgba(55,65,81,.9);color:#e5e7eb;text-align:left;cursor:pointer;display:flex;align-items:center;gap:8px}
+.start-app-btn img{width:20px;height:20px}
+.start-app-btn span{flex:1}
+
+/* LOGIN */
+#loginOverlay{position:fixed;inset:0;background:radial-gradient(circle at top,#1f2937,#020617);display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff}
+#loginBox{width:420px;max-width:90%;background:rgba(15,23,42,.96);border-radius:18px;padding:18px 20px 16px;box-shadow:0 18px 45px rgba(0,0,0,.8);backdrop-filter:blur(18px);display:flex;flex-direction:column;gap:10px}
+#loginBox h2{font-size:20px;margin-bottom:2px}
+#loginBox p{font-size:12px;opacity:.8;margin-bottom:4px}
+#accountList{display:flex;flex-direction:column;gap:6px;margin-top:4px;max-height:220px;overflow-y:auto}
+.account-btn{width:100%;padding:8px 10px;border-radius:12px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px}
+.account-avatar{width:28px;height:28px;border-radius:999px;background:linear-gradient(135deg,#38bdf8,#6366f1);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px}
+.account-name{flex:1}
+#loginError{font-size:11px;color:#f97373;min-height:14px;margin-top:4px}
+#loginActions{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+#btnCreateAccount,#btnPasswordCancel,#btnPasswordOk{width:100%;padding:8px 0;border:none;border-radius:999px;font-size:13px;cursor:pointer}
+#btnCreateAccount{background:#2563eb;color:#fff}
+#passwordPanel{display:none;flex-direction:column;gap:6px;margin-top:6px}
+#passwordPanel input{width:100%;padding:7px 9px;border-radius:10px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;font-size:13px}
+#btnPasswordOk{background:#2563eb;color:#fff}
+#btnPasswordCancel{background:#4b5563;color:#e5e7eb}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9998}
+.modal{background:#020617;border-radius:14px;border:1px solid #4b5563;padding:14px 16px;width:320px;max-width:90%;color:#e5e7eb;box-shadow:0 18px 40px rgba(0,0,0,.8)}
+.modal h3{font-size:16px;margin-bottom:6px}
+.modal p{font-size:13px;opacity:.9;margin-bottom:8px}
+.modal input{width:100%;padding:7px 9px;margin:4px 0 10px;border-radius:10px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;font-size:13px}
+.modal-buttons{display:flex;gap:8px;margin-top:6px}
+.modal-buttons button{flex:1;padding:7px 0;border:none;border-radius:999px;font-size:13px;cursor:pointer}
+.btn-primary{background:#2563eb;color:#fff}
+.btn-secondary{background:#374151;color:#e5e7eb}
+.btn-danger{background:#ef4444;color:#fee2e2}
+
+/* STORE */
+.store-root{display:flex;flex-direction:column;height:100%;padding:10px}
+.store-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.store-title{font-size:18px;font-weight:600}
+.store-search{width:220px;padding:6px 9px;border-radius:999px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;font-size:13px}
+.store-tabs{display:flex;gap:8px;margin-bottom:10px}
+.store-tab{padding:5px 10px;border-radius:999px;font-size:13px;cursor:pointer;background:#020617;border:1px solid transparent;color:#e5e7eb}
+.store-tab.active{border-color:#2563eb;background:#111827}
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;overflow-y:auto;padding-right:4px}
+.store-card{background:rgba(15,23,42,.95);border-radius:14px;border:1px solid rgba(55,65,81,.9);padding:10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 10px 25px rgba(0,0,0,.6)}
+.store-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#0b1120;font-weight:700}
+.store-name{font-size:14px;font-weight:500}
+.store-type{font-size:11px;opacity:.7}
+.store-btn{margin-top:4px;padding:5px 8px;border-radius:999px;border:none;font-size:12px;cursor:pointer;background:#2563eb;color:#fff}
+.store-empty{font-size:13px;opacity:.8;margin-top:10px}
+
+/* STUDIO */
+.studio-wrap{padding:10px;height:100%;display:flex;flex-direction:column}
+.studio-wrap h2{font-size:18px;margin-bottom:4px}
+.studio-wrap p{font-size:13px;opacity:.8;margin-bottom:8px}
+.studio-textarea{width:100%;height:340px;margin:8px 0;background:#020617;color:#e5e7eb;border:1px solid #4b5563;padding:6px;font-family:Consolas,monospace;font-size:13px;border-radius:8px}
+.studio-buttons{display:flex;gap:8px;margin-top:4px}
+.studio-buttons button{padding:6px 12px;border-radius:999px;border:none;font-size:13px;cursor:pointer}
+.studio-run{background:#22c55e;color:#022c22}
+.studio-close{background:#374151;color:#e5e7eb}
+
+/* FILES */
+.files-wrap{padding:10px;height:100%;display:flex;flex-direction:column}
+.files-list-item{padding:8px;border:1px solid #4b5563;border-radius:8px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+
+<div id="loginOverlay">
+  <div id="loginBox">
+    <div>
+      <h2>Dynexis OS</h2>
+      <p>Select an account to sign in.</p>
+    </div>
+    <div id="accountList"></div>
+
+    <div id="passwordPanel">
+      <p style="font-size:12px;opacity:.8;">Enter password for <span id="passwordUserLabel"></span></p>
+      <input id="passwordInput" type="password" placeholder="Password">
+      <div style="display:flex;gap:6px;">
+        <button id="btnPasswordOk">Sign in</button>
+        <button id="btnPasswordCancel">Cancel</button>
+      </div>
+    </div>
+
+    <div id="loginActions">
+      <button id="btnCreateAccount">Create New Account</button>
+      <div id="loginError"></div>
+    </div>
+  </div>
+</div>
+
+<div id="desktop">
+  <div class="icon" style="top:20px;left:20px;" data-app="about">
+    <img src="https://img.icons8.com/fluency/96/monitor.png"><span>About OS</span>
+  </div>
+  <div class="icon" style="top:110px;left:20px;" data-app="htmlstudio">
+    <img src="https://img.icons8.com/fluency/96/source-code.png"><span>HTML Studio</span>
+  </div>
+  <div class="icon" style="top:200px;left:20px;" data-app="store">
+    <img src="https://img.icons8.com/fluency/96/shop.png"><span>Dynexis Store</span>
+  </div>
+  <div class="icon" style="top:290px;left:20px;" data-app="paint">
+    <img src="https://img.icons8.com/fluency/96/paint-palette.png"><span>Paint</span>
+  </div>
+  <div class="icon" style="top:380px;left:20px;" data-app="files">
+    <img src="https://img.icons8.com/fluency/96/folder-invoices.png"><span>Files</span>
+  </div>
+
+  <div id="taskbar">
+    <button id="start-btn">
+      <img src="https://img.icons8.com/fluency/24/windows-11.png">
+      <span>Start</span>
+    </button>
+    <div id="taskbar-apps"></div>
+    <div id="clock"></div>
+  </div>
+
+  <div id="start-menu">
+    <input id="startSearch" type="text" placeholder="Search apps…">
+    <div id="startApps"></div>
+  </div>
+</div>
+
+<script>
+let currentUser=null,selectedLoginUser=null,zIndexCounter=10;
+const desktop=document.getElementById("desktop");
+const taskbarApps=document.getElementById("taskbar-apps");
+const clockEl=document.getElementById("clock");
+const startMenu=document.getElementById("start-menu");
+const startSearch=document.getElementById("startSearch");
+const startApps=document.getElementById("startApps");
+setInterval(()=>clockEl.textContent=new Date().toLocaleTimeString(),1000);
+
+/* ACCOUNTS */
+function loadAccounts(){return JSON.parse(localStorage.getItem("dynexis_accounts")||"[]");}
+function saveAccounts(list){localStorage.setItem("dynexis_accounts",JSON.stringify(list));}
+function addAccount(username,password){const list=loadAccounts();if(list.find(a=>a.username===username))return;list.push({username,password});saveAccounts(list);}
+function findAccount(username){return loadAccounts().find(a=>a.username===username);}
+function ensureDefaultAccount(){let list=loadAccounts();if(list.length===0){list=[{username:"Luca",password:"1234"}];saveAccounts(list);}}
+ensureDefaultAccount();
+
+/* USER KEYS */
+function userKey(suffix){if(!currentUser)return"dynexis_guest_"+suffix;return"dynexis_"+currentUser+"_"+suffix;}
+
+/* GLOBAL GAMES + BUILTIN + INSTALLED */
+function loadGames(){return JSON.parse(localStorage.getItem("dynexis_global_games")||"[]");}
+function saveGames(g){localStorage.setItem("dynexis_global_games",JSON.stringify(g));}
+function loadBuiltinApps(){
+  return [{
+    id:"paint",
+    name:"Mini Paint",
+    html:`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Mini Paint</title><style>
+      body{margin:0;font-family:Segoe UI,sans-serif;background:#f3f3f3}
+      .toolbar{display:flex;gap:10px;padding:10px;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+      button,input{padding:6px 10px;border-radius:8px;border:1px solid #ccc;cursor:pointer}
+      canvas{display:block;margin:10px;background:white;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+    </style></head><body>
+    <div class="toolbar">
+      <input type="color" id="colorPicker" value="#000000">
+      <input type="range" id="brushSize" min="1" max="50" value="5">
+      <button id="eraser">Eraser</button>
+      <button id="clear">Clear</button>
+      <button id="save">Save</button>
+    </div>
+    <canvas id="canvas"></canvas>
+    <script>
+    const canvas=document.getElementById("canvas");const ctx=canvas.getContext("2d");
+    canvas.width=window.innerWidth-20;canvas.height=window.innerHeight-80;
+    let drawing=false,color="#000",size=5,erasing=false;
+    const colorPicker=document.getElementById("colorPicker");
+    const brushSize=document.getElementById("brushSize");
+    const eraserBtn=document.getElementById("eraser");
+    const clearBtn=document.getElementById("clear");
+    const saveBtn=document.getElementById("save");
+    colorPicker.oninput=()=>{color=colorPicker.value;erasing=false;};
+    brushSize.oninput=()=>size=brushSize.value;
+    eraserBtn.onclick=()=>erasing=true;
+    clearBtn.onclick=()=>ctx.clearRect(0,0,canvas.width,canvas.height);
+    saveBtn.onclick=()=>{const link=document.createElement("a");link.download="drawing.png";link.href=canvas.toDataURL();link.click();};
+    canvas.addEventListener("mousedown",()=>drawing=true);
+    canvas.addEventListener("mouseup",()=>{drawing=false;ctx.beginPath();});
+    canvas.addEventListener("mousemove",draw);
+    function draw(e){if(!drawing)return;ctx.lineWidth=size;ctx.lineCap="round";ctx.strokeStyle=erasing?"white":color;
+      ctx.lineTo(e.clientX-canvas.offsetLeft,e.clientY-canvas.offsetTop);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(e.clientX-canvas.offsetLeft,e.clientY-canvas.offsetTop);}
+    <\/script></body></html>`,
+    inStore:true,
+    owner:"SYSTEM"
+  }];
+}
+function loadInstalled(){return JSON.parse(localStorage.getItem(userKey("installed"))||"[]");}
+function saveInstalled(list){localStorage.setItem(userKey("installed"),JSON.stringify(list));}
+function addGame(game){const games=loadGames();games.push(game);saveGames(games);}
+function getGame(id){const g=loadGames().find(g=>g.id===id);if(g)return g;return loadBuiltinApps().find(g=>g.id===id);}
+
+/* LOGIN UI */
+const accountListEl=document.getElementById("accountList");
+const loginErrorEl=document.getElementById("loginError");
+const passwordPanel=document.getElementById("passwordPanel");
+const passwordInput=document.getElementById("passwordInput");
+const passwordUserLabel=document.getElementById("passwordUserLabel");
+const btnPasswordOk=document.getElementById("btnPasswordOk");
+const btnPasswordCancel=document.getElementById("btnPasswordCancel");
+const btnCreateAccount=document.getElementById("btnCreateAccount");
+
+function renderAccountList(){
+  accountListEl.innerHTML="";
+  loadAccounts().forEach(acc=>{
+    const btn=document.createElement("button");
+    btn.className="account-btn";
+    btn.innerHTML=`<div class="account-avatar">${acc.username[0].toUpperCase()}</div><div class="account-name">${acc.username}</div>`;
+    btn.onclick=()=>{selectedLoginUser=acc.username;passwordUserLabel.textContent=acc.username;passwordInput.value="";passwordPanel.style.display="flex";loginErrorEl.textContent="";passwordInput.focus();};
+    accountListEl.appendChild(btn);
+  });
+}
+renderAccountList();
+btnPasswordCancel.onclick=()=>{selectedLoginUser=null;passwordPanel.style.display="none";passwordInput.value="";loginErrorEl.textContent="";};
+btnPasswordOk.onclick=()=>{
+  if(!selectedLoginUser)return;
+  const acc=findAccount(selectedLoginUser);
+  const pass=passwordInput.value.trim();
+  if(!pass){loginErrorEl.textContent="Enter password.";return;}
+  if(!acc||acc.password!==pass){loginErrorEl.textContent="Wrong password.";return;}
+  currentUser=acc.username;
+  document.getElementById("loginOverlay").style.display="none";
+  applySavedBackground();
+  refreshGameIcons();
+};
+passwordInput.addEventListener("keydown",e=>{if(e.key==="Enter")btnPasswordOk.click();});
+
+btnCreateAccount.onclick=()=>{
+  const old=document.getElementById("newAccPanel");if(old)old.remove();
+  const panel=document.createElement("div");
+  panel.id="newAccPanel";
+  panel.style.cssText="display:flex;flex-direction:column;gap:6px;margin-top:10px;background:rgba(15,23,42,.8);padding:12px;border-radius:12px;border:1px solid #4b5563";
+  panel.innerHTML=`
+    <p style="font-size:12px;opacity:.8;">Create a new account</p>
+    <input id="newAccName" type="text" placeholder="Account name" style="padding:7px 9px;border-radius:10px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;">
+    <input id="newAccPass" type="password" placeholder="Password" style="padding:7px 9px;border-radius:10px;border:1px solid #4b5563;background:#020617;color:#e5e7eb;">
+    <div style="display:flex;gap:6px;">
+      <button id="newAccCreate" style="flex:1;background:#2563eb;color:#fff;border:none;border-radius:999px;padding:7px 0;cursor:pointer;">Create</button>
+      <button id="newAccCancel" style="flex:1;background:#4b5563;color:#fff;border:none;border-radius:999px;padding:7px 0;cursor:pointer;">Cancel</button>
+    </div>`;
+  document.getElementById("loginBox").appendChild(panel);
+  document.getElementById("newAccCreate").onclick=()=>{
+    const name=document.getElementById("newAccName").value.trim();
+    const pass=document.getElementById("newAccPass").value.trim();
+    if(!name){loginErrorEl.textContent="Enter a name.";return;}
+    if(!pass){loginErrorEl.textContent="Enter a password.";return;}
+    if(findAccount(name)){loginErrorEl.textContent="That name is taken.";return;}
+    addAccount(name,pass);renderAccountList();panel.remove();loginErrorEl.textContent="Account created!";
+  };
+  document.getElementById("newAccCancel").onclick=()=>panel.remove();
+};
+
+/* APP LIST */
+let appList=[
+  {name:"About OS",id:"about",icon:"https://img.icons8.com/fluency/48/monitor.png"},
+  {name:"HTML Studio",id:"htmlstudio",icon:"https://img.icons8.com/fluency/48/source-code.png"},
+  {name:"Dynexis Store",id:"store",icon:"https://img.icons8.com/fluency/48/shop.png"},
+  {name:"Paint",id:"paint",icon:"https://img.icons8.com/fluency/48/paint-palette.png"},
+  {name:"Files",id:"files",icon:"https://img.icons8.com/fluency/48/folder-invoices.png"}
+];
+function registerGameAsApp(game){
+  appList.push({
+    name:game.name,
+    id:game.id==="paint"?"paint":"game-"+game.id,
+    icon:game.id==="paint"?"https://img.icons8.com/fluency/48/paint-palette.png":"https://img.icons8.com/fluency/48/controller.png"
+  });
+  renderStartApps();
+}
+
+/* DESKTOP GAME ICONS */
+function refreshGameIcons(){
+  document.querySelectorAll(".icon[data-game-id]").forEach(i=>i.remove());
+  const installed=loadInstalled();
+  const all=[...loadBuiltinApps(),...loadGames()];
+  const games=all.filter(g=>installed.includes(g.id));
+  let baseLeft=120,baseTop=20;
+  games.forEach((g,idx)=>{
+    const icon=document.createElement("div");
+    icon.className="icon";
+    icon.dataset.gameId=g.id;
+    icon.dataset.app=g.id==="paint"?"paint":"game-"+g.id;
+    const col=idx%3,row=Math.floor(idx/3);
+    icon.style.left=(baseLeft+col*80)+"px";
+    icon.style.top=(baseTop+row*90)+"px";
+    icon.innerHTML=`<img src="${g.id==="paint"?"https://img.icons8.com/fluency/96/paint-palette.png":"https://img.icons8.com/fluency/96/controller.png"}"><span>${g.name}</span>`;
+    desktop.appendChild(icon);
+    icon.onclick=()=>createWindow(icon.dataset.app);
+  });
+}
+
+/* TASKBAR */
+function createTaskButton(win,label){
+  const btn=document.createElement("button");
+  btn.className="task-btn";
+  btn.textContent=label;
+  const id=Math.random().toString(36).slice(2);
+  win.dataset.taskId=id;btn.dataset.taskId=id;
+  btn.onclick=()=>{if(win.style.display==="none")win.style.display="flex";win.style.zIndex=++zIndexCounter;};
+  taskbarApps.appendChild(btn);
+}
+function removeTaskButton(win){
+  const btn=taskbarApps.querySelector(`[data-task-id="${win.dataset.taskId}"]`);
+  if(btn)btn.remove();
+}
+
+/* DRAG */
+function makeDraggable(win,handle){
+  let ox=0,oy=0,drag=false;
+  handle.onmousedown=e=>{if(win.dataset.max)return;drag=true;ox=e.clientX-win.offsetLeft;oy=e.clientY-win.offsetTop;win.style.zIndex=++zIndexCounter;};
+  document.addEventListener("mousemove",e=>{if(!drag)return;win.style.left=e.clientX-ox+"px";win.style.top=e.clientY-oy+"px";});
+  document.addEventListener("mouseup",()=>drag=false);
+}
+
+/* MODAL */
+function showModal(options){
+  const back=document.createElement("div");back.className="modal-backdrop";
+  const box=document.createElement("div");box.className="modal";
+  box.innerHTML=`<h3>${options.title||""}</h3><p>${options.message||""}</p>`;
+  let inputEl=null;
+  if(options.input){inputEl=document.createElement("input");inputEl.type="text";inputEl.placeholder=options.inputPlaceholder||"";box.appendChild(inputEl);}
+  const btnRow=document.createElement("div");btnRow.className="modal-buttons";
+  (options.buttons||[]).forEach(b=>{
+    const btn=document.createElement("button");
+    btn.textContent=b.label;btn.className=b.className||"btn-secondary";
+    btn.onclick=()=>{document.body.removeChild(back);if(b.onClick)b.onClick(inputEl?inputEl.value:"");};
+    btnRow.appendChild(btn);
+  });
+  box.appendChild(btnRow);back.appendChild(box);document.body.appendChild(back);if(inputEl)inputEl.focus();
+}
+
+/* WINDOWS */
+function createWindow(appId){
+  const win=document.createElement("div");
+  win.className="window";
+  win.style.top="70px";win.style.left="70px";win.style.zIndex=++zIndexCounter;
+  const header=document.createElement("div");header.className="window-header";
+  const title=document.createElement("div");title.className="window-title";
+  const controls=document.createElement("div");controls.className="window-controls";
+  const btnClose=document.createElement("button");btnClose.className="window-btn btn-close";
+  const btnMin=document.createElement("button");btnMin.className="window-btn btn-min";
+  const btnMax=document.createElement("button");btnMax.className="window-btn btn-max";
+  controls.append(btnMin,btnMax,btnClose);header.append(title,controls);
+  const body=document.createElement("div");body.className="window-body";
+
+  /* ABOUT */
+  if(appId==="about"){
+    title.textContent="About Dynexis OS";
+    body.innerHTML=`
+      <div style="padding:10px;">
+        <h2>Dynexis OS</h2>
+        <p style="margin-top:6px;font-size:13px;">User: <b>${currentUser||"Guest"}</b></p>
+        <p style="margin-top:4px;font-size:13px;opacity:.8;">Custom web desktop with accounts, store, HTML games, Paint and Files.</p>
+      </div>`;
+  }
+
+  /* HTML STUDIO */
+  else if(appId==="htmlstudio"){
+    title.textContent="HTML Studio";
+    let gameSession={id:null,name:null};
+    function openEditor(){
+      body.innerHTML=`
+        <div class="studio-wrap">
+          <h2>HTML Studio</h2>
+          <p>Editing game: <b>${gameSession.name}</b></p>
+          <textarea id="studioCode" class="studio-textarea"><h1>${gameSession.name}</h1><p>Your game here.</p></textarea>
+          <div class="studio-buttons">
+            <button class="studio-run">OK</button>
+            <button class="studio-close">Close</button>
+          </div>
+        </div>`;
+      setTimeout(()=>{
+        const codeBox=body.querySelector("#studioCode");
+        const btnOk=body.querySelector(".studio-run");
+        const btnClose2=body.querySelector(".studio-close");
+        btnOk.onclick=()=>{
+          const html=codeBox.value.trim();if(!html)return;
+          showModal({
+            title:"Save this game to Dynexis Store?",
+            message:`Do you want to save "${gameSession.name}" to the Store?`,
+            buttons:[
+              {label:"Yes",className:"btn-primary",onClick:()=>{
+                const id="g"+Date.now();
+                const game={id,name:gameSession.name,html,inStore:true,owner:currentUser};
+                addGame(game);
+                let installed=loadInstalled();if(!installed.includes(id)){installed.push(id);saveInstalled(installed);}
+                registerGameAsApp(game);refreshGameIcons();win.remove();removeTaskButton(win);
+              }},
+              {label:"No",className:"btn-secondary",onClick:()=>{
+                const id="g"+Date.now();
+                const game={id,name:gameSession.name,html,inStore:false,owner:currentUser};
+                addGame(game);
+                let installed=loadInstalled();if(!installed.includes(id)){installed.push(id);saveInstalled(installed);}
+                registerGameAsApp(game);refreshGameIcons();win.remove();removeTaskButton(win);
+              }}
+            ]
+          });
+        };
+        btnClose2.onclick=()=>{win.remove();removeTaskButton(win);};
+      },0);
+    }
+    showModal({
+      title:"New Game",
+      message:"Enter a name for your game.",
+      input:true,
+      inputPlaceholder:"My Game",
+      buttons:[
+        {label:"OK",className:"btn-primary",onClick:(val)=>{
+          const name=(val||"Untitled Game").trim();gameSession.name=name||"Untitled Game";openEditor();
+        }},
+        {label:"Cancel",className:"btn-secondary",onClick:()=>{win.remove();removeTaskButton(win);}}
+      ]
+    });
+  }
+
+  /* PAINT */
+  else if(appId==="paint"){
+    const paint=loadBuiltinApps().find(a=>a.id==="paint");
+    title.textContent="Mini Paint";
+    body.innerHTML=`<iframe style="width:100%;height:100%;border:none;background:#fff;"></iframe>`;
+    setTimeout(()=>{
+      const frame=body.querySelector("iframe");
+      const doc=frame.contentDocument||frame.contentWindow.document;
+      doc.open();doc.write(paint.html);doc.close();
+    },0);
+  }
+
+  /* STORE */
+  else if(appId==="store"){
+    title.textContent="Dynexis Store";
+    body.innerHTML=`
+      <div class="store-root">
+        <div class="store-header">
+          <div class="store-title">Dynexis Store</div>
+          <input class="store-search" id="storeSearch" placeholder="Search apps">
+        </div>
+        <div class="store-tabs">
+          <div class="store-tab active" data-tab="apps">Apps</div>
+          <div class="store-tab" data-tab="creations">My Creations</div>
+        </div>
+        <div class="store-grid" id="storeGrid"></div>
+      </div>`;
+    setTimeout(()=>{
+      const tabs=body.querySelectorAll(".store-tab");
+      const grid=body.querySelector("#storeGrid");
+      const search=body.querySelector("#storeSearch");
+      let currentTab="apps";
+      function renderCard(g){
+        const card=document.createElement("div");
+        card.className="store-card";
+        const icon=document.createElement("div");
+        icon.className="store-icon";
+        icon.style.background=g.id==="paint"?"#facc15":"#38bdf8";
+        icon.textContent=g.name[0].toUpperCase();
+        const name=document.createElement("div");
+        name.className="store-name";name.textContent=g.name;
+        const type=document.createElement("div");
+        type.className="store-type";
+        type.textContent=g.id==="paint"?"App • Built-in Mini Paint":"Game • HTML Studio";
+        const btn=document.createElement("button");
+        btn.className="store-btn";
+        const installed=loadInstalled();
+        const isInstalled=installed.includes(g.id);
+        btn.textContent=isInstalled?"Uninstall":"Install";
+        btn.onclick=()=>{
+          let inst=loadInstalled();
+          if(inst.includes(g.id))inst=inst.filter(id=>id!==g.id);else inst.push(g.id);
+          saveInstalled(inst);refreshGameIcons();render();
+        };
+        card.append(icon,name,type,btn);grid.appendChild(card);
+      }
+      function render(){
+        grid.innerHTML="";
+        const q=(search.value||"").toLowerCase();
+        const builtin=loadBuiltinApps().filter(a=>a.inStore);
+        const userGames=loadGames().filter(g=>g.inStore);
+        const all=[...builtin,...userGames];
+        if(currentTab==="apps"){
+          const filtered=all.filter(g=>g.name.toLowerCase().includes(q));
+          if(filtered.length===0){grid.innerHTML=`<div class="store-empty">No apps.</div>`;return;}
+          filtered.forEach(renderCard);return;
+        }
+        if(currentTab==="creations"){
+          const mine=userGames.filter(g=>(g.owner||currentUser)===currentUser&&g.name.toLowerCase().includes(q));
+          if(mine.length===0){grid.innerHTML=`<div class="store-empty">No creations yet.</div>`;return;}
+          mine.forEach(renderCard);return;
+        }
+      }
+      tabs.forEach(t=>{t.onclick=()=>{tabs.forEach(x=>x.classList.remove("active"));t.classList.add("active");currentTab=t.dataset.tab;render();};});
+      search.oninput=render;render();
+    },0);
+  }
+
+  /* FILES */
+  else if(appId==="files"){
+    title.textContent="Files";
+    body.innerHTML=`
+      <div class="files-wrap">
+        <h2 style="margin-bottom:10px;">Files</h2>
+        <div style="background:#020617;border:1px solid #4b5563;border-radius:10px;padding:10px;flex:1;overflow-y:auto;">
+          <div style="margin-bottom:10px;">
+            <b>System</b>
+            <p style="font-size:12px;opacity:.6;">Protected folder — cannot open or delete</p>
+          </div>
+          <hr style="border-color:#4b5563;margin:10px 0;">
+          <h3 style="margin-bottom:6px;">Installed Apps & Games</h3>
+          <div id="filesList"></div>
+        </div>
+      </div>`;
+    setTimeout(()=>{
+      const list=body.querySelector("#filesList");
+      const installed=loadInstalled();
+      const all=[...loadBuiltinApps(),...loadGames()];
+      const items=all.filter(g=>installed.includes(g.id));
+      if(items.length===0){list.innerHTML=`<p style="opacity:.7;">No installed apps.</p>`;return;}
+      items.forEach(g=>{
+        const row=document.createElement("div");
+        row.className="files-list-item";
+        row.innerHTML=`
+          <span>${g.name}</span>
+          <div style="display:flex;gap:6px;">
+            <button class="openBtn" style="padding:4px 8px;border:none;border-radius:6px;background:#2563eb;color:white;cursor:pointer;">Open</button>
+            <button class="delBtn" style="padding:4px 8px;border:none;border-radius:6px;background:#ef4444;color:white;cursor:pointer;">Delete</button>
+          </div>`;
+        row.querySelector(".openBtn").onclick=()=>{createWindow(g.id==="paint"?"paint":"game-"+g.id);};
+        row.querySelector(".delBtn").onclick=()=>{
+          showModal({
+            title:"Delete App",
+            message:`Delete "${g.name}"?`,
+            buttons:[
+              {label:"Delete",className:"btn-danger",onClick:()=>{
+                let inst=loadInstalled();inst=inst.filter(id=>id!==g.id);saveInstalled(inst);refreshGameIcons();row.remove();
+              }},
+              {label:"Cancel",className:"btn-secondary"}
+            ]
+          });
+        };
+        list.appendChild(row);
+      });
+    },0);
+  }
+
+  /* GAME WINDOW */
+  else if(appId.startsWith("game-")){
+    const id=appId.slice(5);
+    const game=getGame(id);
+    title.textContent=game?game.name:"Game";
+    body.innerHTML=`<iframe style="width:100%;height:100%;border:none;background:#000;"></iframe>`;
+    setTimeout(()=>{
+      const frame=body.querySelector("iframe");
+      const doc=frame.contentDocument||frame.contentWindow.document;
+      doc.open();doc.write(game?game.html:"<h1>Game not found</h1>");doc.close();
+    },0);
+  }
+
+  win.append(header,body);desktop.appendChild(win);
+  createTaskButton(win,title.textContent);
+  btnClose.onclick=()=>{removeTaskButton(win);win.remove();};
+  btnMin.onclick=()=>win.style.display="none";
+  btnMax.onclick=()=>{
+    if(!win.dataset.max){
+      win.dataset.prev=JSON.stringify({top:win.style.top,left:win.style.left,width:win.style.width,height:win.style.height});
+      win.style.top="0";win.style.left="0";win.style.width="100%";win.style.height="calc(100% - 40px)";win.dataset.max="1";
+    }else{
+      const p=JSON.parse(win.dataset.prev);
+      win.style.top=p.top;win.style.left=p.left;win.style.width=p.width;win.style.height=p.height;delete win.dataset.max;
+    }
+    win.style.zIndex=++zIndexCounter;
+  };
+  win.onmousedown=()=>win.style.zIndex=++zIndexCounter;
+  makeDraggable(win,header);
+  return win;
+}
+
+/* DESKTOP ICONS */
+document.querySelectorAll(".icon").forEach(icon=>{icon.onclick=()=>createWindow(icon.dataset.app);});
+
+/* START MENU */
+function renderStartApps(filter=""){
+  startApps.innerHTML="";
+  appList.filter(a=>a.name.toLowerCase().includes(filter.toLowerCase())).forEach(app=>{
+    const b=document.createElement("button");
+    b.className="start-app-btn";
+    b.innerHTML=`<img src="${app.icon}"><span>${app.name}</span>`;
+    b.onclick=()=>{createWindow(app.id);startMenu.style.display="none";};
+    startApps.appendChild(b);
+  });
+}
+renderStartApps();
+startSearch.oninput=()=>renderStartApps(startSearch.value);
+document.getElementById("start-btn").onclick=()=>{startMenu.style.display=startMenu.style.display==="none"?"flex":"none";};
+
+/* BACKGROUND */
+function applySavedBackground(){
+  const d=document.getElementById("desktop");
+  const saved=localStorage.getItem(userKey("bg"))||"none";
+  const custom=localStorage.getItem(userKey("custom_bg"));
+  d.style.backgroundImage="";d.style.backgroundSize="cover";d.style.backgroundPosition="center";
+  if(saved==="none"){d.style.background="#111";}
+  else if(saved==="space"){d.style.background="#020617";d.style.backgroundImage="radial-gradient(circle at top,#1e293b,#020617)";}
+  else if(saved==="sunset"){d.style.backgroundImage="linear-gradient(135deg,#f97316,#ec4899)";}
+  else if(saved==="forest"){d.style.backgroundImage="linear-gradient(135deg,#14532d,#022c22)";}
+  else if(saved==="custom"&&custom){d.style.backgroundImage=`url(${custom})`;}
+  else d.style.background="#111";
+}
+applySavedBackground();
+</script>
+</body>
+</html>
