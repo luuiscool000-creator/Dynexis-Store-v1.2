@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dynexis XG</title>
+<style>
+  body {
+    margin:0;
+    font-family:"MS Sans Serif",Arial,sans-serif;
+    overflow:hidden;
+  }
+  #login-screen {
+    position:fixed; inset:0;
+    background:#3A6EA5;
+    display:flex; align-items:center; justify-content:center;
+    z-index:10000; color:white;
+  }
+  #login-panel {
+    width:420px; background:#F0F0F0;
+    border:2px outset #FFFFFF;
+    box-shadow:0 0 20px rgba(0,0,0,0.6);
+    color:black;
+  }
+  #login-titlebar {
+    background:#0A246A; color:white;
+    padding:6px 8px; font-weight:bold; font-size:13px;
+  }
+  #login-content { padding:12px; font-size:13px; }
+  .login-section-title { font-weight:bold; margin:6px 0 4px; }
+  .login-accounts { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+  .login-account-btn {
+    background:#D4D0C8; border:2px outset #FFFFFF;
+    padding:6px 10px; cursor:pointer; min-width:80px; text-align:center;
+  }
+  .login-account-btn.selected { background:#0A246A; color:white; }
+  .login-row { margin-top:6px; }
+  .login-input {
+    width:100%; box-sizing:border-box;
+    border:2px inset #808080;
+    font-family:"MS Sans Serif",Arial,sans-serif;
+    font-size:12px; padding:2px 4px;
+  }
+  .login-buttons {
+    margin-top:10px; display:flex; justify-content:flex-end; gap:6px;
+  }
+  .login-button {
+    background:#D4D0C8; border:2px outset white;
+    padding:3px 10px; cursor:pointer; font-size:12px;
+  }
+  .login-note { font-size:11px; color:#404040; margin-top:4px; }
+  .login-error { color:#B00000; font-size:11px; margin-top:4px; }
+  #create-account-box {
+    margin-top:10px; padding:8px;
+    border:1px solid #808080; background:#E4E4E4; display:none;
+  }
+
+  #desktop { position:fixed; inset:0; padding:10px; }
+  .icon {
+    position:relative; width:70px; text-align:center;
+    font-size:12px; color:white; cursor:pointer; margin-bottom:10px;
+  }
+  .icon img {
+    width:32px; height:32px; display:block; margin:0 auto 4px;
+  }
+
+  #taskbar {
+    position:fixed; bottom:0; left:0; right:0; height:32px;
+    background:#C0C0C0; border-top:2px solid white;
+    display:flex; align-items:center; padding:0 6px; gap:6px;
+  }
+  #start {
+    background:#C0C0C0; border:2px outset white;
+    padding:4px 10px; cursor:pointer; font-size:13px;
+  }
+  #clock {
+    margin-left:auto; padding:4px 8px;
+    background:#C0C0C0; border:2px inset white; font-size:12px;
+  }
+
+  #startmenu {
+    position:fixed; bottom:32px; left:0; width:210px;
+    background:#C0C0C0; border:2px outset white;
+    display:none; flex-direction:column;
+  }
+  .start-item {
+    padding:6px; border-bottom:1px solid #808080;
+    cursor:pointer; font-size:13px;
+  }
+  .start-item:hover { background:#000080; color:white; }
+
+  .window {
+    position:absolute; width:480px; height:360px;
+    background:#C0C0C0; border:2px outset white;
+    display:flex; flex-direction:column;
+  }
+  .titlebar {
+    background:#000080; color:white;
+    padding:4px; font-size:13px; cursor:move;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .close-btn {
+    background:#C0C0C0; border:2px outset white;
+    width:20px; height:20px; text-align:center;
+    cursor:pointer; color:black;
+  }
+  .content {
+    flex:1; background:white; border:2px inset #808080;
+    padding:6px; overflow:auto; font-size:13px;
+  }
+  .retro-input {
+    font-family:"MS Sans Serif",Arial,sans-serif;
+    font-size:12px; border:2px inset #808080; background:white;
+  }
+  .retro-button {
+    font-family:"MS Sans Serif",Arial,sans-serif;
+    font-size:12px; background:#C0C0C0;
+    border:2px outset white; padding:2px 8px;
+    cursor:pointer; margin-right:4px; margin-top:2px;
+  }
+
+  #publish-popup {
+    position:fixed; inset:0; background:rgba(0,0,0,0.3);
+    display:none; align-items:center; justify-content:center; z-index:20000;
+  }
+  #publish-box {
+    width:320px; background:#C0C0C0;
+    border:2px outset white; font-size:13px;
+  }
+  #publish-titlebar {
+    background:#000080; color:white;
+    padding:4px 6px; font-weight:bold;
+  }
+  #publish-body { padding:10px; }
+  #publish-buttons {
+    display:flex; justify-content:flex-end; gap:6px; margin-top:10px;
+  }
+
+  #error406-screen {
+    position:fixed; inset:0; background:#001a33; color:white;
+    display:none; align-items:center; justify-content:center;
+    z-index:30000; font-family:"MS Sans Serif",Arial,sans-serif;
+  }
+  #error406-box {
+    background:#002b55; border:2px solid #ffffff;
+    padding:20px; text-align:center; width:400px;
+  }
+  #error406-box h2 { margin:0 0 10px; }
+
+  .system-container {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    font-size:13px;
+  }
+  .system-header {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:#2459a6;
+    color:white;
+    padding:4px 6px;
+  }
+  .system-section {
+    background:#f0f4ff;
+    border:1px solid #9fb6e9;
+    padding:6px;
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div id="login-panel">
+    <div id="login-titlebar">Welcome to Dynexis XG</div>
+    <div id="login-content">
+      <div id="login-message"></div>
+
+      <div id="login-no-accounts" style="display:none;">
+        <p>No accounts found.<br>Please create an account to continue.</p>
+        <div class="login-buttons">
+          <button class="login-button" onclick="showCreateAccountBox()">Create New Account</button>
+        </div>
+      </div>
+
+      <div id="login-has-accounts" style="display:none;">
+        <div class="login-section-title">Select an account:</div>
+        <div id="accounts-list" class="login-accounts"></div>
+
+        <div class="login-row">
+          <div>Password:</div>
+          <input id="login-password" type="password" class="login-input">
+        </div>
+
+        <div class="login-buttons">
+          <button class="login-button" onclick="attemptLogin()">Login</button>
+          <button class="login-button" onclick="clearSelection()">Back</button>
+          <button class="login-button" onclick="showCreateAccountBox()">Create New Account</button>
+        </div>
+
+        <div id="login-error" class="login-error"></div>
+      </div>
+
+      <div id="create-account-box">
+        <div class="login-section-title">Create New Account</div>
+        <div class="login-row">
+          Account Name:<br>
+          <input id="new-account-name" class="login-input">
+        </div>
+        <div class="login-row">
+          Password:<br>
+          <input id="new-account-password" type="password" class="login-input">
+        </div>
+        <div class="login-buttons">
+          <button class="login-button" onclick="createAccount()">Create</button>
+          <button class="login-button" onclick="hideCreateAccountBox()">Cancel</button>
+        </div>
+        <div id="create-error" class="login-error"></div>
+      </div>
+
+      <div class="login-note" id="login-note"></div>
+    </div>
+  </div>
+</div>
+
+<div id="publish-popup">
+  <div id="publish-box">
+    <div id="publish-titlebar">Dynexis XG</div>
+    <div id="publish-body">
+      <div>Do you want to save your game<br>to the Store?</div>
+      <div id="publish-buttons">
+        <button class="retro-button" onclick="confirmPublishToStore(true)">Yes</button>
+        <button class="retro-button" onclick="confirmPublishToStore(false)">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="error406-screen">
+  <div id="error406-box">
+    <h2>ERROR 406</h2>
+    <p>System app was deleted.</p>
+    <p>Dynexis XG cannot continue without System.</p>
+    <button class="retro-button" onclick="downloadSystem()">Download System</button>
+  </div>
+</div>
+
+<div id="desktop">
+  <div id="desktop-system">
+    <div class="icon" onclick="openApp('notes')">
+      <img src="https://img.icons8.com/?size=48&id=11797&format=png">
+      Notes
+    </div>
+    <div class="icon" onclick="openApp('terminal')">
+      <img src="https://img.icons8.com/?size=48&id=21278&format=png">
+      Terminal
+    </div>
+    <div class="icon" onclick="openApp('browser')">
+      <img src="https://img.icons8.com/?size=48&id=11896&format=png">
+      Browser
+    </div>
+    <div class="icon" onclick="openApp('music')">
+      <img src="https://img.icons8.com/?size=48&id=11114&format=png">
+      Music
+    </div>
+    <div class="icon" onclick="openApp('store')">
+      <div style="font-size:32px;">🏬</div>
+      Store
+    </div>
+    <div class="icon" onclick="openApp('backgrounds')">
+      <img src="https://img.icons8.com/?size=48&id=59842&format=png">
+      Backgrounds
+    </div>
+    <div class="icon" onclick="openApp('htmlstudio_name')">
+      <img src="https://img.icons8.com/?size=48&id=108784&format=png">
+      HTML Studio
+    </div>
+    <div class="icon" onclick="openApp('xapp')">
+      <div style="font-size:32px;font-weight:bold;color:white;">X</div>
+      X
+    </div>
+    <div class="icon" onclick="openApp('system')">
+      <img src="https://img.icons8.com/?size=48&id=85022&format=png">
+      System
+    </div>
+  </div>
+  <div id="desktop-custom"></div>
+</div>
+
+<div id="taskbar">
+  <div id="start" onclick="toggleStart()">Start</div>
+  <div id="clock"></div>
+</div>
+
+<div id="startmenu">
+  <div class="start-item" onclick="openApp('notes')">Notes</div>
+  <div class="start-item" onclick="openApp('terminal')">Terminal</div>
+  <div class="start-item" onclick="openApp('browser')">Browser</div>
+  <div class="start-item" onclick="openApp('music')">Music Player</div>
+  <div class="start-item" onclick="openApp('store')">Store</div>
+  <div class="start-item" onclick="openApp('backgrounds')">Backgrounds</div>
+  <div class="start-item" onclick="openApp('htmlstudio_name')">HTML Studio</div>
+  <div class="start-item" onclick="openApp('xapp')">X App</div>
+  <div class="start-item" onclick="openApp('system')">System</div>
+  <div class="start-item" onclick="logout()">Log Out</div>
+</div>
+
+<script>
+const PHOTO_EDITOR_CODE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pro Photo Editor+</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial;
+    background: #1e1e1e;
+    color: white;
+    display: flex;
+  }
+  #left { flex: 1; text-align: center; position: relative; }
+  canvas { margin-top: 10px; border: 2px solid #444; cursor: text; background: #111; }
+  #panel { width: 280px; background: #2a2a2a; padding: 10px; }
+  button, input, select {
+    width: 100%; margin: 5px 0; padding: 6px;
+    background: #4CAF50; border: none; color: white; cursor: pointer;
+  }
+  .layer { background: #333; margin: 5px 0; padding: 5px; cursor: pointer; font-size: 12px; }
+  .active { background: #555; }
+</style>
+</head>
+<body>
+
+<div id="left">
+  <h3>Pro Editor+</h3>
+  <input type="file" id="upload" accept="image/*">
+  <canvas id="canvas" width="900" height="600"></canvas>
+</div>
+
+<div id="panel">
+  <button onclick="addText()">Add Text</button>
+  <button onclick="duplicate()">Duplicate</button>
+  <button onclick="removeLayer()">Delete</button>
+  <button onclick="download()">Export</button>
+
+  <label>Rotate</label>
+  <input id="rotateSlider" type="range" min="0" max="360" value="0">
+
+  <label>Scale</label>
+  <input id="scaleSlider" type="range" min="0.1" max="5" step="0.1" value="1">
+
+  <label>Font</label>
+  <select id="fontPicker">
+    <option>Arial</option>
+    <option>Courier New</option>
+    <option>Georgia</option>
+    <option>Times New Roman</option>
+    <option>Verdana</option>
+  </select>
+
+  <label>Color</label>
+  <input id="colorPicker" type="color" value="#ffffff">
+
+  <label><input type="checkbox" id="outline"> Outline</label>
+
+  <h4>Layers</h4>
+  <div id="layers"></div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const upload = document.getElementById("upload");
+const layersDiv = document.getElementById("layers");
+const rotateSlider = document.getElementById("rotateSlider");
+const scaleSlider = document.getElementById("scaleSlider");
+const fontPicker = document.getElementById("fontPicker");
+const colorPicker = document.getElementById("colorPicker");
+const outlineBox = document.getElementById("outline");
+
+let layers = [];
+let selected = null;
+
+upload.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const img = new Image();
+  const reader = new FileReader();
+
+  reader.onload = () => img.src = reader.result;
+  reader.readAsDataURL(file);
+
+  img.onload = () => {
+    layers.push({
+      type: "image",
+      img,
+      x: 450,
+      y: 300,
+      rot: 0,
+      scale: 1
+    });
+
+    selected = layers.length - 1;
+    updateUI();
+    draw();
+  };
+});
+
+function addText() {
+  layers.push({
+    type: "text",
+    text: "Click to type",
+    x: 450,
+    y: 300,
+    rot: 0,
+    scale: 1,
+    font: "Arial",
+    color: "#ffffff",
+    outline: false
+  });
+
+  selected = layers.length - 1;
+  updateUI();
+  draw();
+}
+
+function duplicate() {
+  if (selected === null) return;
+  const copy = JSON.parse(JSON.stringify(layers[selected]));
+  layers.push(copy);
+  selected = layers.length - 1;
+  updateUI();
+  draw();
+}
+
+function removeLayer() {
+  if (selected === null) return;
+  layers.splice(selected, 1);
+  selected = null;
+  updateUI();
+  draw();
+}
+
+function updateUI() {
+  layersDiv.innerHTML = "";
+
+  layers.forEach((l, i) => {
+    const div = document.createElement("div");
+    div.className = "layer" + (i === selected ? " active" : "");
+    div.innerText = l.type + " " + i;
+
+    div.onclick = () => {
+      selected = i;
+
+      const layer = layers[i];
+
+      rotateSlider.value = (layer.rot || 0) * 180 / Math.PI;
+      scaleSlider.value = layer.scale || 1;
+
+      if (layer.type === "text") {
+        fontPicker.value = layer.font;
+        colorPicker.value = layer.color;
+        outlineBox.checked = layer.outline;
+      }
+
+      updateUI();
+      draw();
+    };
+
+    layersDiv.appendChild(div);
+  });
+}
+
+rotateSlider.oninput = () => {
+  if (selected === null) return;
+  layers[selected].rot = rotateSlider.value * Math.PI / 180;
+  draw();
+};
+
+scaleSlider.oninput = () => {
+  if (selected === null) return;
+  layers[selected].scale = parseFloat(scaleSlider.value);
+  draw();
+};
+
+fontPicker.onchange = () => {
+  if (selected === null) return;
+  if (layers[selected].type === "text") {
+    layers[selected].font = fontPicker.value;
+    draw();
+  }
+};
+
+colorPicker.oninput = () => {
+  if (selected === null) return;
+  if (layers[selected].type === "text") {
+    layers[selected].color = colorPicker.value;
+    draw();
+  }
+};
+
+outlineBox.onchange = () => {
+  if (selected === null) return;
+  if (layers[selected].type === "text") {
+    layers[selected].outline = outlineBox.checked;
+    draw();
+  }
+};
+
+let dragging = false;
+let offsetX, offsetY;
+
+canvas.addEventListener("mousedown", e => {
+  const mx = e.offsetX;
+  const my = e.offsetY;
+
+  selected = null;
+
+  for (let i = layers.length - 1; i >= 0; i--) {
+    const l = layers[i];
+
+    const s = l.scale || 1;
+
+    if (l.type === "image") {
+      const w = l.img.width * s;
+      const h = l.img.height * s;
+
+      if (mx > l.x - w/2 && mx < l.x + w/2 && my > l.y - h/2 && my < l.y + h/2) {
+        selected = i;
+        break;
+      }
+    }
+
+    if (l.type === "text") {
+      if (Math.abs(mx - l.x) < 120 && Math.abs(my - l.y) < 40) {
+        selected = i;
+        break;
+      }
+    }
+  }
+
+  if (selected !== null) {
+    dragging = true;
+    offsetX = mx - layers[selected].x;
+    offsetY = my - layers[selected].y;
+  }
+
+  updateUI();
+  draw();
+});
+
+canvas.addEventListener("mousemove", e => {
+  if (!dragging || selected === null) return;
+
+  layers[selected].x = e.offsetX - offsetX;
+  layers[selected].y = e.offsetY - offsetY;
+
+  draw();
+});
+
+canvas.addEventListener("mouseup", () => dragging = false);
+
+window.addEventListener("keydown", e => {
+  if (selected === null) return;
+
+  const l = layers[selected];
+  if (l.type !== "text") return;
+
+  if (e.key === "Backspace") {
+    l.text = l.text.slice(0, -1);
+  } else if (e.key.length === 1) {
+    l.text += e.key;
+  }
+
+  draw();
+});
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  layers.forEach(l => {
+    ctx.save();
+    ctx.translate(l.x, l.y);
+    ctx.rotate(l.rot || 0);
+
+    const s = l.scale || 1;
+
+    if (l.type === "image") {
+      ctx.scale(s, s);
+      ctx.drawImage(l.img, -l.img.width/2, -l.img.height/2);
+    }
+
+    if (l.type === "text") {
+      ctx.scale(s, s);
+      ctx.font = \`30px \${l.font}\`;
+      ctx.fillStyle = l.color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      if (l.outline) {
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 4;
+        ctx.strokeText(l.text, 0, 0);
+      }
+
+      ctx.fillText(l.text, 0, 0);
+    }
+
+    ctx.restore();
+  });
+}
+
+function download() {
+  const out = document.createElement("canvas");
+  const octx = out.getContext("2d");
+
+  out.width = canvas.width;
+  out.height = canvas.height;
+
+  layers.forEach(l => {
+    octx.save();
+    octx.translate(l.x, l.y);
+    octx.rotate(l.rot || 0);
+
+    const s = l.scale || 1;
+
+    if (l.type === "image") {
+      octx.scale(s, s);
+      octx.drawImage(l.img, -l.img.width/2, -l.img.height/2);
+    }
+
+    if (l.type === "text") {
+      octx.scale(s, s);
+      octx.font = \`30px \${l.font}\`;
+      octx.fillStyle = l.color;
+      octx.textAlign = "center";
+      octx.textBaseline = "middle";
+
+      if (l.outline) {
+        octx.strokeStyle = "#000";
+        octx.lineWidth = 4;
+        octx.strokeText(l.text, 0, 0);
+      }
+
+      octx.fillText(l.text, 0, 0);
+    }
+
+    octx.restore();
+  });
+
+  out.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = "pro-edit.png";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  });
+}
+
+draw();
+<\/script>
+</body>
+</html>`;
+
+let accounts = {};
+let selectedAccount = null;
+let currentAccount = null;
+
+let storeGames = [];
+let pendingGameName = "";
+let pendingGameCode = "";
+
+let xChat = [];
+
+let z = 10;
+let windows = {};
+let currentGameName = "";
+
+const ADMIN_PASSWORD = "dynexis123real526";
+
+function loadAccounts() {
+  try {
+    const raw = localStorage.getItem("dynexis_accounts");
+    accounts = raw ? JSON.parse(raw) : {};
+    if (!accounts || typeof accounts !== "object" || Array.isArray(accounts)) accounts = {};
+  } catch { accounts = {}; }
+
+  Object.keys(accounts).forEach(name => {
+    const acc = accounts[name];
+    if (acc.banned === undefined) acc.banned = false;
+    if (acc.banReason === undefined) acc.banReason = "";
+    if (acc.timebanUntil === undefined) acc.timebanUntil = 0;
+  });
+}
+function saveAccounts() {
+  localStorage.setItem("dynexis_accounts", JSON.stringify(accounts));
+}
+function loadStoreGames() {
+  try {
+    const raw = localStorage.getItem("dynexis_store_games");
+    storeGames = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(storeGames)) storeGames = [];
+  } catch { storeGames = []; }
+}
+function saveStoreGames() {
+  localStorage.setItem("dynexis_store_games", JSON.stringify(storeGames));
+}
+function loadXChat() {
+  try {
+    const raw = localStorage.getItem("dynexis_xchat");
+    xChat = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(xChat)) xChat = [];
+  } catch { xChat = []; }
+}
+function saveXChat() {
+  localStorage.setItem("dynexis_xchat", JSON.stringify(xChat));
+}
+
+function initLoginScreen() {
+  loadAccounts();
+  loadStoreGames();
+  loadXChat();
+  const hasAccounts = Object.keys(accounts).length > 0;
+
+  document.getElementById("login-no-accounts").style.display = hasAccounts ? "none" : "block";
+  document.getElementById("login-has-accounts").style.display = hasAccounts ? "block" : "none";
+  document.getElementById("create-account-box").style.display = "none";
+  document.getElementById("login-error").textContent = "";
+  document.getElementById("create-error").textContent = "";
+  document.getElementById("login-password").value = "";
+  selectedAccount = null;
+  renderAccountsList();
+
+  const msg = document.getElementById("login-message");
+  if (!hasAccounts) {
+    msg.innerHTML = "Welcome to Dynexis XG<br>---------------------<br>No accounts found.<br>Please create an account to continue.";
+  } else {
+    msg.innerHTML = "Select an account and enter the password.";
+  }
+
+  const note = document.getElementById("login-note");
+  note.textContent = hasAccounts
+    ? "Click an account above, then type the password and press Login."
+    : "You must create at least one account before using the system.";
+}
+
+function renderAccountsList() {
+  const list = document.getElementById("accounts-list");
+  list.innerHTML = "";
+  Object.keys(accounts).forEach(name => {
+    const btn = document.createElement("div");
+    btn.className = "login-account-btn" + (selectedAccount === name ? " selected" : "");
+    btn.textContent = name;
+    btn.onclick = () => {
+      selectedAccount = name;
+      document.querySelectorAll(".login-account-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      document.getElementById("login-error").textContent = "";
+      document.getElementById("login-password").focus();
+    };
+    list.appendChild(btn);
+  });
+}
+
+function showCreateAccountBox() {
+  document.getElementById("create-account-box").style.display = "block";
+  document.getElementById("create-error").textContent = "";
+  document.getElementById("new-account-name").value = "";
+  document.getElementById("new-account-password").value = "";
+  document.getElementById("new-account-name").focus();
+}
+function hideCreateAccountBox() {
+  document.getElementById("create-account-box").style.display = "none";
+  document.getElementById("create-error").textContent = "";
+}
+function createAccount() {
+  const name = document.getElementById("new-account-name").value.trim();
+  const pass = document.getElementById("new-account-password").value;
+  if (!name) {
+    document.getElementById("create-error").textContent = "Account name is required.";
+    return;
+  }
+  if (accounts[name]) {
+    document.getElementById("create-error").textContent = "That account name already exists.";
+    return;
+  }
+  accounts[name] = {
+    password: pass,
+    background: "#008080",
+    desktopIcons: [],
+    installedOfficialApps: {},
+    banned: false,
+    banReason: "",
+    timebanUntil: 0
+  };
+  saveAccounts();
+  hideCreateAccountBox();
+  initLoginScreen();
+}
+function attemptLogin() {
+  if (!selectedAccount) {
+    document.getElementById("login-error").textContent = "Please select an account.";
+    return;
+  }
+  const pass = document.getElementById("login-password").value;
+  const acc = accounts[selectedAccount];
+  if (!acc) {
+    document.getElementById("login-error").textContent = "Account not found.";
+    return;
+  }
+
+  const now = Date.now();
+  if (acc.banned) {
+    document.getElementById("login-error").textContent =
+      "This account is banned. Reason: " + (acc.banReason || "No reason given.");
+    return;
+  }
+  if (acc.timebanUntil && now < acc.timebanUntil) {
+    const until = new Date(acc.timebanUntil);
+    document.getElementById("login-error").textContent =
+      "This account is under time ban. Please wait until: " + until.toLocaleString();
+    return;
+  }
+
+  if (acc.password !== pass) {
+    document.getElementById("login-error").textContent = "Incorrect password.";
+    return;
+  }
+
+  currentAccount = selectedAccount;
+  document.getElementById("login-screen").style.display = "none";
+  applyAccountEnvironment();
+}
+function clearSelection() {
+  selectedAccount = null;
+  document.getElementById("login-password").value = "";
+  document.getElementById("login-error").textContent = "";
+  renderAccountsList();
+}
+function logout() {
+  Object.keys(windows).forEach(id => {
+    if (windows[id]) windows[id].remove();
+  });
+  windows = {};
+
+  currentAccount = null;
+  resetEnvironmentToDefault();
+  document.getElementById("login-screen").style.display = "flex";
+  initLoginScreen();
+}
+
+function applyAccountEnvironment() {
+  if (!currentAccount || !accounts[currentAccount]) return;
+  const acc = accounts[currentAccount];
+
+  if (acc.background) {
+    if (acc.background.startsWith("data:")) {
+      document.body.style.background = `url('${acc.background}')`;
+      document.body.style.backgroundSize = "cover";
+    } else {
+      document.body.style.background = acc.background;
+      document.body.style.backgroundSize = "";
+    }
+  } else {
+    document.body.style.background = "#008080";
+    document.body.style.backgroundSize = "";
+  }
+
+  const custom = document.getElementById("desktop-custom");
+  custom.innerHTML = "";
+  (acc.desktopIcons || []).forEach(iconData => {
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.innerHTML = `
+      <img src="https://img.icons8.com/?size=48&id=108784&format=png">
+      ${iconData.name}
+    `;
+    icon.dataset.gameName = iconData.name;
+    icon.dataset.gameCode = iconData.code;
+    icon.onclick = () => openCustomGameFromIcon(icon);
+    custom.appendChild(icon);
+  });
+
+  const installed = acc.installedOfficialApps || {};
+  if (installed.pixelpaint) {
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.innerHTML = `
+      <img src="https://img.icons8.com/?size=48&id=59817&format=png">
+      Pixel Paint
+    `;
+    icon.onclick = () => openApp("pixelpaint");
+    custom.appendChild(icon);
+  }
+
+  if (installed.adminpanel) {
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.innerHTML = `
+      <img src="https://img.icons8.com/?size=48&id=9969&format=png">
+      Admin Panel
+    `;
+    icon.onclick = () => openApp("adminpanel");
+    custom.appendChild(icon);
+  }
+
+  if (installed.photoeditor) {
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.innerHTML = `
+      <img src="https://img.icons8.com/?size=48&id=59817&format=png">
+      Photo Editor+
+    `;
+    icon.onclick = () => openApp("photoeditor");
+    custom.appendChild(icon);
+  }
+}
+function resetEnvironmentToDefault() {
+  document.body.style.background = "#008080";
+  document.body.style.backgroundSize = "";
+  document.getElementById("desktop-custom").innerHTML = "";
+}
+
+function toggleStart() {
+  const menu = document.getElementById("startmenu");
+  menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+}
+function openApp(id) {
+  if (windows[id]) { focus(id); return; }
+  createWindow(id);
+}
+function createWindow(id) {
+  const win = document.createElement("div");
+  win.className = "window";
+  win.style.top = "100px";
+  win.style.left = "100px";
+  win.style.zIndex = ++z;
+  win.innerHTML = `
+    <div class="titlebar" onmousedown="dragStart(event, '${id}')">
+      ${getTitle(id)}
+      <div style="display:flex;gap:4px;">
+        <div class="close-btn" onclick="minimizeWindow('${id}')">_</div>
+        <div class="close-btn" onclick="maximizeWindow('${id}')">□</div>
+        <div class="close-btn" onclick="closeWindow('${id}')">X</div>
+      </div>
+    </div>
+    <div class="content">${getContent(id)}</div>
+  `;
+
+  document.body.appendChild(win);
+  windows[id] = win;
+
+  if (id === "store") renderStore();
+  if (id === "pixelpaint") {
+    const frame = document.getElementById("pixelpaint-frame");
+    if (frame) frame.srcdoc = getPixelPaintHTML();
+  }
+  if (id === "system") renderSystem();
+  if (id === "xapp") renderXChat();
+  if (id === "photoeditor") {
+    const frame = document.getElementById("photoeditor-frame");
+    if (frame) frame.srcdoc = PHOTO_EDITOR_CODE;
+  }
+}
+function getTitle(id) {
+  return {
+    notes:"Notes",
+    terminal:"Terminal",
+    browser:"Browser",
+    music:"Music Player",
+    store:"Store",
+    backgrounds:"Backgrounds",
+    htmlstudio_name:"HTML Studio – Name Game",
+    htmlstudio:"HTML Studio",
+    xapp:"X App",
+    pixelpaint:"Pixel Paint",
+    adminpanel:"Admin Panel",
+    system:"System",
+    photoeditor:"Photo Editor+"
+  }[id] || id;
+}
+function getContent(id) {
+  if (id === "notes")
+    return `<textarea style="width:100%;height:100%;" class="retro-input"></textarea>`;
+  if (id === "terminal")
+    return `
+      <div id="terminal-output" style="height:80%;overflow:auto;font-family:monospace;"></div>
+      <input id="terminal-input" class="retro-input" style="width:100%;margin-top:4px;" placeholder="Type a command...">
+      <button class="retro-button" onclick="runTerminalCommand()">Run</button>
+    `;
+  if (id === "browser")
+    return `<iframe src="https://www.bing.com" style="width:100%;height:100%;border:none;"></iframe>`;
+  if (id === "music")
+    return `
+      <p>Music Player</p>
+      <audio id="music-audio" controls style="width:100%;"></audio>
+      <br><br>
+      <input type="file" accept="audio/*" onchange="loadMusic(event)" class="retro-input">
+    `;
+  if (id === "store")
+    return `
+      <p><b>Dynexis Store</b></p>
+      <div id="store-official">
+        <p><b>Official Apps</b></p>
+        <div id="store-official-list"></div>
+      </div>
+      <hr>
+      <div id="store-user">
+        <p><b>User-Created Games</b></p>
+        <div id="store-user-list"></div>
+      </div>
+    `;
+  if (id === "backgrounds")
+    return `
+      <p>Select a background:</p>
+      <button class="retro-button" onclick="setBG('#008080')">Teal</button>
+      <button class="retro-button" onclick="setBG('#000080')">Navy</button>
+      <button class="retro-button" onclick="setBG('#800000')">Maroon</button>
+      <button class="retro-button" onclick="setBG('#2F4F4F')">Dark Slate</button>
+      <br><br>
+      <p>Upload custom:</p>
+      <input type="file" accept="image/*" onchange="uploadBG(event)" class="retro-input">
+    `;
+  if (id === "htmlstudio_name")
+    return `
+      <p>Name your game:</p>
+      <input id="gameNameInput" class="retro-input" style="width:100%;">
+      <br><br>
+      <button class="retro-button" onclick="startHTMLStudio()">OK</button>
+    `;
+  if (id === "htmlstudio")
+    return `
+      <p>Editing: <b>${currentGameName}</b></p>
+      <textarea id="html-code" class="retro-input" style="width:100%;height:150px;">
+<h1>${currentGameName}</h1>
+<p>Welcome to my retro game!</p>
+      </textarea>
+      <br>
+      <button class="retro-button" onclick="runHTMLStudio()">Try</button>
+      <button class="retro-button" onclick="saveHTMLGame()">Make Game</button>
+      <br><br>
+      <iframe id="html-preview" style="width:100%;height:350px;border:2px inset #808080;background:white;"></iframe>
+    `;
+  if (id === "xapp")
+    return `
+      <div id="x-chat" style="height:80%;overflow:auto;font-family:monospace;background:black;color:#00ffea;padding:4px;border:2px inset #333;"></div>
+      <input id="x-message" class="retro-input" style="width:100%;margin-top:4px;background:#111;color:#00ffea;border:2px inset #333;" placeholder="Type a message...">
+      <button class="retro-button" onclick="sendXMessage()">Send</button>
+    `;
+  if (id === "pixelpaint")
+    return `<iframe id="pixelpaint-frame" style="width:100%;height:100%;border:none;background:#222;"></iframe>`;
+  if (id === "photoeditor")
+    return `<iframe id="photoeditor-frame" style="width:100%;height:100%;border:none;background:#111;"></iframe>`;
+  if (id === "system")
+    return `
+      <div class="system-container">
+        <div class="system-header">
+          <img src="https://img.icons8.com/?size=32&id=85022&format=png">
+          <span><b>System – Dynexis XG</b></span>
+        </div>
+
+        <div class="system-section">
+          <b>Account</b><br>
+          <div id="system-account"></div>
+        </div>
+
+        <div class="system-section">
+          <b>Apps & Games</b><br>
+          <div id="system-apps"></div>
+          <hr>
+          <div id="system-games"></div>
+          <hr>
+          <div id="system-store-games"></div>
+        </div>
+
+        <div class="system-section">
+          <b>Advanced</b><br>
+          <div id="system-advanced"></div>
+        </div>
+
+        <div class="system-section">
+          <b>Hardware</b><br>
+          <div id="system-hardware"></div>
+        </div>
+      </div>
+    `;
+  if (id === "adminpanel")
+    return `
+      <p><b>Admin Panel</b></p>
+      <p>Enter Dynexis admin password to continue.</p>
+      <input id="admin-pass" type="password" class="retro-input" style="width:100%;margin-bottom:6px;">
+      <button class="retro-button" onclick="unlockAdminPanel()">OK</button>
+      <div id="admin-error" style="color:#b00000;font-size:11px;margin-top:4px;"></div>
+      <div id="admin-panel-inner" style="display:none;margin-top:10px;">
+        <p><b>Manage Accounts</b></p>
+        <label>Select account:</label><br>
+        <select id="admin-account-select" class="retro-input" style="width:100%;margin-bottom:6px;"></select>
+
+        <p><b>Ban account</b></p>
+        <input id="admin-ban-reason" class="retro-input" style="width:100%;margin-bottom:4px;" placeholder="Reason (optional)">
+        <button class="retro-button" onclick="adminBanAccount()">Ban</button>
+
+        <hr>
+
+        <p><b>Time-ban account</b></p>
+        <input id="admin-timeban-minutes" class="retro-input" style="width:100%;margin-bottom:4px;" placeholder="Minutes to ban">
+        <button class="retro-button" onclick="adminTimebanAccount()">Set Time Ban</button>
+
+        <hr>
+
+        <p><b>Unban account</b></p>
+        <button class="retro-button" onclick="adminUnbanAccount()">Unban / Clear Time Ban</button>
+      </div>
+    `;
+  return "Unknown app";
+}
+
+function getPixelPaintHTML() {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pixel Paint</title>
+<style>
+  body { font-family:Arial,sans-serif; text-align:center; background:#222; color:white; margin:0; }
+  #grid {
+    display:grid;
+    grid-template-columns:repeat(16,25px);
+    grid-template-rows:repeat(16,25px);
+    gap:2px; justify-content:center; margin-top:20px;
+  }
+  .pixel { width:25px; height:25px; background:white; cursor:pointer; }
+  #controls { margin-top:20px; }
+  button,input { margin:5px; padding:8px; font-size:14px; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <input type="color" id="colorPicker" value="#ff0000">
+  <button onclick="clearGrid()">Clear</button>
+</div>
+<div id="grid"></div>
+<script>
+  const grid = document.getElementById("grid");
+  const colorPicker = document.getElementById("colorPicker");
+  let mouseDown = false;
+  document.body.onmousedown = () => mouseDown = true;
+  document.body.onmouseup = () => mouseDown = false;
+  function createGrid(size) {
+    grid.innerHTML = "";
+    grid.style.gridTemplateColumns = \`repeat(\${size},25px)\`;
+    grid.style.gridTemplateRows = \`repeat(\${size},25px)\`;
+    for (let i=0;i<size*size;i++) {
+      const pixel = document.createElement("div");
+      pixel.classList.add("pixel");
+      pixel.addEventListener("mousedown", paint);
+      pixel.addEventListener("mouseover", e => { if (mouseDown) paint(e); });
+      grid.appendChild(pixel);
+    }
+  }
+  function paint(e) { e.target.style.backgroundColor = colorPicker.value; }
+  function clearGrid() {
+    document.querySelectorAll(".pixel").forEach(p => p.style.backgroundColor = "white");
+  }
+  createGrid(16);
+<\/script>
+</body>
+</html>
+  `;
+}
+
+function closeWindow(id) {
+  if (!windows[id]) return;
+  windows[id].remove();
+  delete windows[id];
+}
+function focus(id) {
+  if (!windows[id]) return;
+  windows[id].style.zIndex = ++z;
+}
+
+let dragData = null;
+function dragStart(e,id) {
+  if (!windows[id]) return;
+  dragData = {
+    id,
+    offsetX:e.clientX - windows[id].offsetLeft,
+    offsetY:e.clientY - windows[id].offsetTop
+  };
+  document.onmousemove = dragMove;
+  document.onmouseup = dragEnd;
+}
+function dragMove(e) {
+  if (!dragData) return;
+  const win = windows[dragData.id];
+  if (!win) return;
+  win.style.left = (e.clientX - dragData.offsetX) + "px";
+  win.style.top = (e.clientY - dragData.offsetY) + "px";
+}
+function dragEnd() {
+  dragData = null;
+  document.onmousemove = null;
+  document.onmouseup = null;
+}
+
+function minimizeWindow(id) {
+  const win = windows[id];
+  if (!win) return;
+  win.style.display = "none";
+  const btn = document.createElement("button");
+  btn.className = "retro-button";
+  btn.textContent = getTitle(id);
+  btn.onclick = () => {
+    win.style.display = "flex";
+    focus(id);
+    btn.remove();
+  };
+  document.getElementById("taskbar").appendChild(btn);
+}
+function maximizeWindow(id) {
+  const win = windows[id];
+  if (!win) return;
+  if (win.dataset.maximized === "true") {
+    win.style.width = "480px";
+    win.style.height = "360px";
+    win.style.top = "100px";
+    win.style.left = "100px";
+    win.dataset.maximized = "false";
+  } else {
+    win.style.top = "0px";
+    win.style.left = "0px";
+    win.style.width = "100vw";
+    win.style.height = "calc(100vh - 32px)";
+    win.dataset.maximized = "true";
+  }
+}
+
+function setBG(color) {
+  if (currentAccount && accounts[currentAccount]) {
+    accounts[currentAccount].background = color;
+    saveAccounts();
+  }
+  document.body.style.background = color;
+  document.body.style.backgroundSize = "";
+}
+function uploadBG(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const data = reader.result;
+    if (currentAccount && accounts[currentAccount]) {
+      accounts[currentAccount].background = data;
+      saveAccounts();
+    }
+    document.body.style.background = `url('${data}')`;
+    document.body.style.backgroundSize = "cover";
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadMusic(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const audio = document.getElementById("music-audio");
+  if (!audio) return;
+  const url = URL.createObjectURL(file);
+  audio.src = url;
+  audio.play();
+}
+
+function startHTMLStudio() {
+  const input = document.getElementById("gameNameInput");
+  if (!input) return;
+  let name = input.value.trim();
+  if (!name) {
+    closeWindow("htmlstudio_name");
+    return;
+  }
+  name = name.replace(/\s+/g," ").trim();
+  currentGameName = name;
+  closeWindow("htmlstudio_name");
+  openApp("htmlstudio");
+}
+function runHTMLStudio() {
+  const codeEl = document.getElementById("html-code");
+  const frame = document.getElementById("html-preview");
+  if (!codeEl || !frame) return;
+  frame.srcdoc = codeEl.value;
+}
+function saveHTMLGame() {
+  const codeEl = document.getElementById("html-code");
+  if (!codeEl) return;
+  const name = (currentGameName || "Untitled Game").replace(/\s+/g," ").trim();
+  const code = codeEl.value;
+  pendingGameName = name;
+  pendingGameCode = code;
+  document.getElementById("publish-popup").style.display = "flex";
+}
+function confirmPublishToStore(saveToStore) {
+  document.getElementById("publish-popup").style.display = "none";
+  const name = pendingGameName || "Untitled Game";
+  const code = pendingGameCode || "<h1>Blank Game</h1><p>No code stored.</p>";
+  if (currentAccount && accounts[currentAccount]) {
+    const acc = accounts[currentAccount];
+    acc.desktopIcons = acc.desktopIcons || [];
+    acc.desktopIcons = acc.desktopIcons.filter(i => i.name !== name);
+    acc.desktopIcons.push({ name, code });
+    saveAccounts();
+    applyAccountEnvironment();
+  }
+  if (saveToStore) {
+    const id = "game_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+    storeGames.push({ id, name, code, creator: currentAccount || "Unknown" });
+    saveStoreGames();
+    if (windows["store"]) renderStore();
+  }
+  pendingGameName = "";
+  pendingGameCode = "";
+}
+
+function openCustomGameFromIcon(icon) {
+  const name = icon.dataset.gameName || "Unknown Game";
+  const code = icon.dataset.gameCode || "<h1>Blank Game</h1><p>No code stored.</p>";
+  openCustomGameFromData(name, code);
+}
+function openCustomGameFromData(name, code) {
+  const id = "window_game_" + name.replace(/[^a-z0-9]/gi,"_").toLowerCase();
+  const frameId = "frame_game_" + name.replace(/[^a-z0-9]/gi,"_").toLowerCase();
+  if (windows[id]) { focus(id); return; }
+  const win = document.createElement("div");
+  win.className = "window";
+  win.style.top = "100px";
+  win.style.left = "100px";
+  win.style.zIndex = ++z;
+  win.innerHTML = `
+    <div class="titlebar" onmousedown="dragStart(event, '${id}')">
+      ${name}
+      <div style="display:flex;gap:4px;">
+        <div class="close-btn" onclick="minimizeWindow('${id}')">_</div>
+        <div class="close-btn" onclick="maximizeWindow('${id}')">□</div>
+        <div class="close-btn" onclick="closeWindow('${id}')">X</div>
+      </div>
+    </div>
+    <div class="content">
+      <iframe id="${frameId}" style="width:100%;height:100%;border:none;background:white;"></iframe>
+    </div>
+  `;
+  document.body.appendChild(win);
+  windows[id] = win;
+  document.getElementById(frameId).srcdoc = code;
+}
+
+function renderStore() {
+  const officialList = document.getElementById("store-official-list");
+  const userList = document.getElementById("store-user-list");
+  if (!officialList || !userList) return;
+  officialList.innerHTML = "";
+  userList.innerHTML = "";
+
+  const pixelPaintRow = document.createElement("div");
+  pixelPaintRow.style.display = "flex";
+  pixelPaintRow.style.alignItems = "center";
+  pixelPaintRow.style.marginBottom = "4px";
+  pixelPaintRow.innerHTML = `
+    <img src="https://img.icons8.com/?size=32&id=59817&format=png" style="margin-right:6px;">
+    <span style="flex:1;">Pixel Paint</span>
+  `;
+  const btnPP = document.createElement("button");
+  btnPP.className = "retro-button";
+  let installedPP = false;
+  if (currentAccount && accounts[currentAccount]) {
+    const acc = accounts[currentAccount];
+    acc.installedOfficialApps = acc.installedOfficialApps || {};
+    installedPP = !!acc.installedOfficialApps.pixelpaint;
+  }
+  btnPP.textContent = installedPP ? "Open" : "Install";
+  btnPP.onclick = () => {
+    if (!currentAccount || !accounts[currentAccount]) return;
+    const acc = accounts[currentAccount];
+    acc.installedOfficialApps = acc.installedOfficialApps || {};
+    if (!acc.installedOfficialApps.pixelpaint) {
+      acc.installedOfficialApps.pixelpaint = true;
+      saveAccounts();
+      applyAccountEnvironment();
+      btnPP.textContent = "Open";
+    }
+    openApp("pixelpaint");
+  };
+  pixelPaintRow.appendChild(btnPP);
+  officialList.appendChild(pixelPaintRow);
+
+  const systemRow = document.createElement("div");
+  systemRow.style.display = "flex";
+  systemRow.style.alignItems = "center";
+  systemRow.style.marginBottom = "4px";
+  systemRow.innerHTML = `
+    <img src="https://img.icons8.com/?size=32&id=85022&format=png" style="margin-right:6px;">
+    <span style="flex:1;">System</span>
+  `;
+  const btnSys = document.createElement("button");
+  btnSys.className = "retro-button";
+  btnSys.textContent = "Open";
+  btnSys.onclick = () => openApp("system");
+  systemRow.appendChild(btnSys);
+  officialList.appendChild(systemRow);
+
+  const adminRow = document.createElement("div");
+  adminRow.style.display = "flex";
+  adminRow.style.alignItems = "center";
+  adminRow.style.marginBottom = "4px";
+  adminRow.innerHTML = `
+    <img src="https://img.icons8.com/?size=32&id=9969&format=png" style="margin-right:6px;">
+    <span style="flex:1;">Admin Panel</span>
+  `;
+  const btnAdmin = document.createElement("button");
+  btnAdmin.className = "retro-button";
+
+  let installedAdmin = false;
+  if (currentAccount && accounts[currentAccount]) {
+    const acc = accounts[currentAccount];
+    acc.installedOfficialApps = acc.installedOfficialApps || {};
+    installedAdmin = !!acc.installedOfficialApps.adminpanel;
+  }
+  btnAdmin.textContent = installedAdmin ? "Open" : "Install";
+  btnAdmin.onclick = () => {
+    if (!currentAccount || !accounts[currentAccount]) return;
+    const acc = accounts[currentAccount];
+    acc.installedOfficialApps = acc.installedOfficialApps || {};
+    if (!acc.installedOfficialApps.adminpanel) {
+      acc.installedOfficialApps.adminpanel = true;
+      saveAccounts();
+      applyAccountEnvironment();
+      btnAdmin.textContent = "Open";
+    }
+    openApp("adminpanel");
+  };
+  adminRow.appendChild(btnAdmin);
+  officialList.appendChild(adminRow);
+
+  const photoRow = document.createElement("div");
+  photoRow.style.display = "flex";
+  photoRow.style.alignItems = "center";
+  photoRow.style.marginBottom = "4px";
+  photoRow.innerHTML = `
+    <img src="https://img.icons8.com/?size=32&id=59817&format=png" style="margin-right:6px;">
+    <span style="flex:1;">Photo Editor+</span>
+  `;
+  const btnPhoto = document.createElement("button");
+  btnPhoto.className = "retro-button";
+
+  let installedPhoto = false;
+  if (currentAccount && accounts[currentAccount]) {
+    const acc = accounts[currentAccount];
+    acc.installedOfficialApps = acc.installedOfficialApps || {};
+    installedPhoto = !!acc.installedOfficialApps.photoeditor;
+  }
+
+  btnPhoto.textContent = installedPhoto ? "Open" : "Install";
+
+  btnPhoto.onclick = () => {
+    if (!currentAccount || !accounts[currentAccount]) return;
+    const acc = accounts[currentAccount];
+    acc.installedOfficialApps = acc.installedOfficialApps || {};
+
+    if (!acc.installedOfficialApps.photoeditor) {
+      acc.installedOfficialApps.photoeditor = true;
+      saveAccounts();
+      applyAccountEnvironment();
+      btnPhoto.textContent = "Open";
+    }
+
+    openApp("photoeditor");
+  };
+
+  photoRow.appendChild(btnPhoto);
+  officialList.appendChild(photoRow);
+
+  if (!storeGames.length) {
+    const empty = document.createElement("div");
+    empty.textContent = "No user-created games yet.";
+    userList.appendChild(empty);
+  } else {
+    storeGames.forEach(game => {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.marginBottom = "4px";
+      row.innerHTML = `
+        <img src="https://img.icons8.com/?size=32&id=108784&format=png" style="margin-right:6px;">
+        <span style="flex:1;">${game.name} <span style="font-size:11px;color:#333;">(by ${game.creator})</span></span>
+      `;
+      const installBtn = document.createElement("button");
+      installBtn.className = "retro-button";
+      installBtn.textContent = "Install";
+      installBtn.onclick = () => {
+        if (!currentAccount || !accounts[currentAccount]) return;
+        const acc = accounts[currentAccount];
+        acc.desktopIcons = acc.desktopIcons || [];
+        acc.desktopIcons = acc.desktopIcons.filter(i => i.name !== game.name);
+        acc.desktopIcons.push({ name: game.name, code: game.code });
+        saveAccounts();
+        applyAccountEnvironment();
+      };
+      row.appendChild(installBtn);
+
+      if (currentAccount && currentAccount === game.creator) {
+        const delBtn = document.createElement("button");
+        delBtn.className = "retro-button";
+        delBtn.textContent = "Delete";
+        delBtn.onclick = () => { deleteStoreGame(game.id); };
+        row.appendChild(delBtn);
+      }
+      userList.appendChild(row);
+    });
+  }
+}
+function deleteStoreGame(id) {
+  storeGames = storeGames.filter(g => g.id !== id);
+  saveStoreGames();
+  if (windows["store"]) renderStore();
+  if (windows["system"]) renderSystem();
+}
+
+function renderSystem() {
+  if (!currentAccount || !accounts[currentAccount]) return;
+  const acc = accounts[currentAccount];
+
+  const accDiv   = document.getElementById("system-account");
+  const appsDiv  = document.getElementById("system-apps");
+  const gamesDiv = document.getElementById("system-games");
+  const storeDiv = document.getElementById("system-store-games");
+  const advDiv   = document.getElementById("system-advanced");
+  const hwDiv    = document.getElementById("system-hardware");
+  if (!accDiv || !appsDiv || !gamesDiv || !storeDiv || !advDiv || !hwDiv) return;
+
+  accDiv.innerHTML = `
+    Name: <b>${currentAccount}</b><br>
+    Password:
+    <span id="system-pass" data-hidden="true">********</span>
+    <button class="retro-button" id="system-pass-toggle">Show</button>
+    <br><br>
+    <button class="retro-button" onclick="systemRenameAccount()">Rename Account</button>
+    <button class="retro-button" onclick="systemChangePassword()">Change Password</button>
+    <button class="retro-button" onclick="systemResetAccount()">Reset Account</button>
+  `;
+  const passToggle = document.getElementById("system-pass-toggle");
+  const passSpan   = document.getElementById("system-pass");
+  if (passToggle && passSpan) {
+    passToggle.onclick = () => {
+      const hidden = passSpan.getAttribute("data-hidden") === "true";
+      if (hidden) {
+        passSpan.textContent = acc.password || "";
+        passSpan.setAttribute("data-hidden","false");
+        passToggle.textContent = "Hide";
+      } else {
+        passSpan.textContent = "********";
+        passSpan.setAttribute("data-hidden","true");
+        passToggle.textContent = "Show";
+      }
+    };
+  }
+
+  const installed = acc.installedOfficialApps || {};
+  let appsHTML = `<div><b>Installed Apps</b></div>`;
+  let hasApps = false;
+
+  if (installed.pixelpaint) {
+    hasApps = true;
+    appsHTML += `
+      <div style="display:flex;align-items:center;margin-bottom:2px;">
+        <span style="flex:1;">Pixel Paint</span>
+        <button class="retro-button" onclick="openApp('pixelpaint')">Open</button>
+        <button class="retro-button" onclick="uninstallApp('pixelpaint')">Delete</button>
+      </div>
+    `;
+  }
+  if (installed.adminpanel) {
+    hasApps = true;
+    appsHTML += `
+      <div style="display:flex;align-items:center;margin-bottom:2px;">
+        <span style="flex:1;">Admin Panel</span>
+        <button class="retro-button" onclick="openApp('adminpanel')">Open</button>
+        <button class="retro-button" onclick="uninstallApp('adminpanel')">Delete</button>
+      </div>
+    `;
+  }
+  if (installed.photoeditor) {
+    hasApps = true;
+    appsHTML += `
+      <div style="display:flex;align-items:center;margin-bottom:2px;">
+        <span style="flex:1;">Photo Editor+</span>
+        <button class="retro-button" onclick="openApp('photoeditor')">Open</button>
+        <button class="retro-button" onclick="uninstallApp('photoeditor')">Delete</button>
+      </div>
+    `;
+  }
+  if (!hasApps) {
+    appsHTML += `<div>No extra apps installed.</div>`;
+  }
+  appsHTML += `<div style="font-size:11px;color:#555;margin-top:4px;">System and Store cannot be deleted.</div>`;
+  appsDiv.innerHTML = appsHTML;
+
+  let gamesHTML = `<div><b>User-made & Installed Games (Desktop)</b></div>`;
+  const installedGames = acc.desktopIcons || [];
+  if (installedGames.length) {
+    installedGames.forEach(g => {
+      gamesHTML += `
+        <div style="display:flex;align-items:center;margin-bottom:2px;">
+          <span style="flex:1;">${g.name}</span>
+          <button class="retro-button" onclick="openCustomGameFromData('${g.name.replace(/'/g,"\\'")}', \`${g.code.replace(/`/g,"\\`")}\`)">Open</button>
+          <button class="retro-button" onclick="uninstallGame('${g.name.replace(/'/g,"\\'")}')">Delete</button>
+        </div>
+      `;
+    });
+  } else {
+    gamesHTML += `<div>No games installed on your desktop.</div>`;
+  }
+  gamesDiv.innerHTML = gamesHTML;
+
+  let storeHTML = `<div><b>Games You Published to Store</b></div>`;
+  const ownPublished = storeGames.filter(g => g.creator === currentAccount);
+  if (ownPublished.length) {
+    ownPublished.forEach(g => {
+      storeHTML += `
+        <div style="display:flex;align-items:center;margin-bottom:2px;">
+          <span style="flex:1;">${g.name}</span>
+          <button class="retro-button" onclick="openCustomGameFromData('${g.name.replace(/'/g,"\\'")}', \`${g.code.replace(/`/g,"\\`")}\`)">Open</button>
+          <button class="retro-button" onclick="deleteStoreGame('${g.id}')">Delete from Store</button>
+        </div>
+      `;
+    });
+  } else {
+    storeHTML += `<div>You have no games in the Store.</div>`;
+  }
+  storeDiv.innerHTML = storeHTML;
+
+  const storageSize = JSON.stringify(localStorage).length;
+  const kb = Math.round(storageSize / 1024);
+
+  advDiv.innerHTML = `
+    <div><b>Storage</b></div>
+    <div>Estimated localStorage usage: ~${kb} KB</div>
+    <br>
+    <div><b>Tools</b></div>
+    <button class="retro-button" onclick="openApp('adminpanel')">Open Admin Panel</button>
+    <button class="retro-button" onclick="console.log('Dynexis log dump:', {accounts, storeGames, xChat}); alert('Logs printed to console.');">Print Logs to Console</button>
+  `;
+
+  const hw = getHardwareInfo();
+  hwDiv.innerHTML = `
+    GPU: ${hw.gpu}<br>
+    RAM: ${hw.ram}
+  `;
+}
+
+function uninstallApp(appId) {
+  if (!currentAccount || !accounts[currentAccount]) return;
+  const acc = accounts[currentAccount];
+  acc.installedOfficialApps = acc.installedOfficialApps || {};
+  if (appId === "pixelpaint") {
+    acc.installedOfficialApps.pixelpaint = false;
+  }
+  if (appId === "adminpanel") {
+    acc.installedOfficialApps.adminpanel = false;
+  }
+  if (appId === "photoeditor") {
+    acc.installedOfficialApps.photoeditor = false;
+  }
+  saveAccounts();
+  applyAccountEnvironment();
+  if (windows["store"]) renderStore();
+  if (windows["system"]) renderSystem();
+}
+function uninstallGame(name) {
+  if (!currentAccount || !accounts[currentAccount]) return;
+  const acc = accounts[currentAccount];
+  acc.desktopIcons = (acc.desktopIcons || []).filter(g => g.name !== name);
+  saveAccounts();
+  applyAccountEnvironment();
+  if (windows["system"]) renderSystem();
+}
+
+function systemRenameAccount() {
+  if (!currentAccount || !accounts[currentAccount]) return;
+  const newName = prompt("Enter new account name:", currentAccount);
+  if (!newName) return;
+  const trimmed = newName.trim();
+  if (!trimmed || accounts[trimmed]) {
+    alert("Invalid or already used name.");
+    return;
+  }
+  accounts[trimmed] = accounts[currentAccount];
+  delete accounts[currentAccount];
+  currentAccount = trimmed;
+  saveAccounts();
+  alert("Account renamed to " + trimmed);
+  renderSystem();
+  initLoginScreen();
+}
+
+function systemChangePassword() {
+  if (!currentAccount || !accounts[currentAccount]) return;
+  const newPass = prompt("Enter new password:");
+  if (newPass === null) return;
+  accounts[currentAccount].password = newPass;
+  saveAccounts();
+  alert("Password changed.");
+  renderSystem();
+}
+
+function systemResetAccount() {
+  if (!currentAccount || !accounts[currentAccount]) return;
+  if (!confirm("Reset this account? This will remove installed apps and desktop games (not Store data).")) return;
+  const acc = accounts[currentAccount];
+  acc.background = "#008080";
+  acc.desktopIcons = [];
+  acc.installedOfficialApps = {};
+  saveAccounts();
+  applyAccountEnvironment();
+  renderSystem();
+  alert("Account reset.");
+}
+
+function getHardwareInfo() {
+  let ram = "Unknown";
+  if (navigator.deviceMemory) ram = navigator.deviceMemory + " GB";
+  let gpu = "Unknown";
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    if (gl) {
+      const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+      if (debugInfo) gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+    }
+  } catch (e) { gpu = "Unknown"; }
+  return { gpu, ram };
+}
+
+function uninstallSystem() {
+  const screen = document.getElementById("error406-screen");
+  if (screen) screen.style.display = "flex";
+}
+function downloadSystem() { location.reload(); }
+
+function runTerminalCommand() {
+  const input = document.getElementById("terminal-input");
+  const output = document.getElementById("terminal-output");
+  if (!input || !output) return;
+  const cmd = input.value.trim();
+  input.value = "";
+  output.innerHTML += `<div>> ${cmd}</div>`;
+  if (cmd.startsWith("open.app/")) {
+    const app = cmd.split("/")[1];
+    openApp(app);
+    output.innerHTML += `<div>Opening app: ${app}</div>`;
+    output.scrollTop = output.scrollHeight;
+    return;
+  }
+  if (cmd === "delete/system") {
+    output.innerHTML += `<div>Deleting System...</div>`;
+    uninstallSystem();
+    return;
+  }
+  if (cmd === "clear") {
+    output.innerHTML = "";
+    return;
+  }
+  output.innerHTML += `<div>Unknown command</div>`;
+  output.scrollTop = output.scrollHeight;
+}
+
+function renderXChat() {
+  const box = document.getElementById("x-chat");
+  if (!box) return;
+  box.innerHTML = "";
+  xChat.forEach(msg => {
+    box.innerHTML += `
+      <div>
+        <span style="color:#ff00ff;">[${msg.user}]</span>
+        <span> ${msg.text}</span>
+        <span style="color:#444;font-size:10px;"> (${msg.time})</span>
+      </div>
+    `;
+  });
+  box.scrollTop = box.scrollHeight;
+}
+function sendXMessage() {
+  const input = document.getElementById("x-message");
+  if (!input || !currentAccount) return;
+  const text = input.value.trim();
+  if (!text) return;
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,"0") + ":" +
+               now.getMinutes().toString().padStart(2,"0");
+  xChat.push({ user: currentAccount, text, time });
+  saveXChat();
+  renderXChat();
+  input.value = "";
+}
+
+function unlockAdminPanel() {
+  const passEl = document.getElementById("admin-pass");
+  const errEl = document.getElementById("admin-error");
+  const inner = document.getElementById("admin-panel-inner");
+  if (!passEl || !errEl || !inner) return;
+
+  if (passEl.value === ADMIN_PASSWORD) {
+    errEl.textContent = "";
+    inner.style.display = "block";
+    fillAdminAccountSelect();
+  } else {
+    errEl.textContent = "Incorrect admin password.";
+    inner.style.display = "none";
+  }
+}
+
+function fillAdminAccountSelect() {
+  const sel = document.getElementById("admin-account-select");
+  if (!sel) return;
+  sel.innerHTML = "";
+  Object.keys(accounts).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function getSelectedAdminAccount() {
+  const sel = document.getElementById("admin-account-select");
+  if (!sel) return null;
+  const name = sel.value;
+  if (!name || !accounts[name]) return null;
+  return { name, acc: accounts[name] };
+}
+
+function adminBanAccount() {
+  const target = getSelectedAdminAccount();
+  if (!target) return;
+  const reasonEl = document.getElementById("admin-ban-reason");
+  const reason = reasonEl ? reasonEl.value.trim() : "";
+  target.acc.banned = true;
+  target.acc.banReason = reason || "No reason given.";
+  target.acc.timebanUntil = 0;
+  saveAccounts();
+  alert("Account '" + target.name + "' has been banned.");
+}
+
+function adminTimebanAccount() {
+  const target = getSelectedAdminAccount();
+  if (!target) return;
+  const minutesEl = document.getElementById("admin-timeban-minutes");
+  if (!minutesEl) return;
+  const mins = parseInt(minutesEl.value, 10);
+  if (isNaN(mins) || mins <= 0) {
+    alert("Please enter a valid number of minutes.");
+    return;
+  }
+  const until = Date.now() + mins * 60 * 1000;
+  target.acc.timebanUntil = until;
+  target.acc.banned = false;
+  target.acc.banReason = "";
+  saveAccounts();
+  alert("Account '" + target.name + "' is time-banned for " + mins + " minutes.");
+}
+
+function adminUnbanAccount() {
+  const target = getSelectedAdminAccount();
+  if (!target) return;
+  target.acc.banned = false;
+  target.acc.banReason = "";
+  target.acc.timebanUntil = 0;
+  saveAccounts();
+  alert("Account '" + target.name + "' is now unbanned.");
+}
+
+setInterval(() => {
+  if (!currentAccount || !accounts[currentAccount]) return;
+
+  const acc = accounts[currentAccount];
+  const now = Date.now();
+
+  if (acc.banned) {
+    alert("You have been banned.\nReason: " + (acc.banReason || "No reason given."));
+    logout();
+    return;
+  }
+
+  if (acc.timebanUntil && now < acc.timebanUntil) {
+    const until = new Date(acc.timebanUntil).toLocaleString();
+    alert("This account is under time ban.\nPlease wait until: " + until);
+    logout();
+    return;
+  }
+}, 1000);
+
+setInterval(() => {
+  const d = new Date();
+  const clock = document.getElementById("clock");
+  if (!clock) return;
+  clock.textContent =
+    d.getHours().toString().padStart(2,"0") + ":" +
+    d.getMinutes().toString().padStart(2,"0");
+}, 1000);
+
+window.onload = () => {
+  resetEnvironmentToDefault();
+  initLoginScreen();
+};
+</script>
+
+</body>
+</html>
