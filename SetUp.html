@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynexis OS Setup</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #334155;
+            --radius: 12px;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
+        }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; pointer-events: none;
+        }
+        
+        .toast {
+            background: rgba(30, 41, 59, 0.95); border: 1px solid var(--border);
+            color: var(--text-primary); padding: 12px 24px; border-radius: 50px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); font-size: 0.9rem;
+            opacity: 0; transition: opacity 0.3s, transform 0.3s;
+            transform: translateY(-20px); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        .setup-window {
+            width: 100%; max-width: 800px; height: 550px;
+            background-color: var(--card-bg); border: 1px solid var(--border);
+            border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column; overflow: hidden; position: relative;
+        }
+
+        .header {
+            padding: 20px 30px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.25rem; font-weight: 700; color: var(--accent);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .logo svg { width: 24px; height: 24px; fill: currentColor; }
+        .step-indicator { font-size: 0.85rem; color: var(--text-secondary); }
+
+        .content {
+            flex: 1; padding: 40px; overflow-y: auto;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+
+        h1 { margin-bottom: 15px; font-size: 2rem; letter-spacing: -0.5px; }
+        p { color: var(--text-secondary); line-height: 1.6; max-width: 500px; margin-bottom: 30px; }
+
+        .form-group { width: 100%; max-width: 350px; text-align: left; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-secondary); }
+
+        input[type="text"], select {
+            width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border);
+            border-radius: 6px; color: var(--text-primary); font-size: 1rem; transition: border-color 0.2s;
+        }
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+        .license-box {
+            width: 100%; max-width: 450px; height: 150px; background: #0f172a;
+            border: 1px solid var(--border); border-radius: 6px; padding: 15px;
+            overflow-y: scroll; text-align: left; font-size: 0.8rem;
+            color: var(--text-secondary); margin-bottom: 20px; font-family: monospace;
+        }
+
+        .checkbox-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+        .checkbox-wrapper input { width: 18px; height: 18px; accent-color: var(--accent); }
+        
+        .progress-container { width: 100%; max-width: 450px; text-align: left; }
+        .progress-bar-bg { width: 100%; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; margin-bottom: 15px; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #818cf8); width: 0%; transition: width 0.2s linear; }
+        .status-text { font-family: monospace; color: var(--accent); font-size: 0.9rem; margin-bottom: 5px; min-height: 1.2em; }
+        
+        .log-container {
+            margin-top: 15px; height: 100px; overflow-y: hidden; font-family: monospace;
+            font-size: 0.75rem; color: var(--text-secondary); border-top: 1px solid var(--border);
+            padding-top: 10px; display: flex; flex-direction: column-reverse;
+        }
+
+        .footer {
+            padding: 20px 30px; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; background: rgba(15, 23, 42, 0.5);
+        }
+
+        .btn {
+            padding: 10px 24px; border-radius: 6px; border: none; font-size: 0.95rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid transparent; }
+        .btn-secondary:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+        .btn-primary { background: var(--accent); color: #0f172a; }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-primary:disabled { background: var(--border); color: var(--text-secondary); cursor: not-allowed; transform: none; }
+
+        .boot-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000;
+            z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: var(--text-primary);
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .success-icon {
+            width: 80px; height: 80px; background: rgba(34, 197, 94, 0.1); color: var(--success);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;
+        }
+        .success-icon svg { width: 40px; height: 40px; fill: currentColor; }
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div id="boot-screen" class="boot-screen">
+        <div class="spinner"></div>
+        <div style="font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">Dynexis OS</div>
+        <div style="font-size: 0.8rem; color: #666; margin-top: 10px;">Initializing Setup Environment...</div>
+    </div>
+
+    <div id="setup-window" class="setup-window hidden">
+        <header class="header">
+            <div class="logo">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
+                Dynexis OS
+            </div>
+            <div class="step-indicator" id="step-indicator">Step 1 of 3</div>
+        </header>
+
+        <main class="content">
+            <!-- Step 1: Welcome -->
+            <section id="step-1" class="step-content fade-in">
+                <h1>Welcome to Dynexis OS</h1>
+                <p>The next generation operating system designed for speed, security, and simplicity. This wizard will guide you through the installation process.</p>
+                <div class="form-group">
+                    <label for="language-select">Select your language</label>
+                    <select id="language-select">
+                        <option value="en" selected>English (US)</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Step 2: License -->
+            <section id="step-2" class="step-content hidden">
+                <h1>License Agreement</h1>
+                <p>Please read and accept the terms of the Dynexis OS software license.</p>
+                <div class="license-box">
+                    DYNEXIS OS END USER LICENSE AGREEMENT<br><br>
+                    1. GRANT OF LICENSE. Dynexis Inc. grants you a personal, non-exclusive license to install and use the Dynexis OS software on your device.<br><br>
+                    2. DISCLAIMER. This software is provided "as is" without warranty of any kind, express or implied.<br><br>
+                    3. LIMITATIONS. You may not reverse engineer, decompile, or disassemble the software.<br><br>
+                    (c) 2023 Dynexis Inc. All rights reserved.
+                </div>
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="license-check">
+                    <span>I accept the license terms</span>
+                </label>
+            </section>
+
+            <!-- Step 3: Installation (Was Step 4) -->
+            <section id="step-3" class="step-content hidden">
+                <h1>Installing Dynexis OS</h1>
+                <p>Please wait while the setup installs files and configures your system.</p>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="install-progress"></div>
+                    </div>
+                    <div class="status-text" id="install-status">Initializing...</div>
+                    <div class="log-container" id="install-log"></div>
+                </div>
+            </section>
+
+            <!-- Step 4: Complete (Was Step 5) -->
+            <section id="step-4" class="step-content hidden">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+                <h1>Setup Complete</h1>
+                <p>Dynexis OS has been installed successfully. Click the button below to finish setup and boot your new system.</p>
+                <a href="https://sites.google.com/view/dynexisosupdates/start" class="btn btn-primary">Finish Setup</a>
+            </section>
+
+        </main>
+
+        <footer class="footer" id="setup-footer">
+            <button class="btn btn-secondary" id="btn-back" onclick="prevStep()" disabled>Back</button>
+            <button class="btn btn-primary" id="btn-next" onclick="nextStep()">Next</button>
+        </footer>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3; // Reduced to 3 total steps
+        let isInstalling = false;
+
+        const setupWindow = document.getElementById('setup-window');
+        const bootScreen = document.getElementById('boot-screen');
+        const stepIndicator = document.getElementById('step-indicator');
+        const btnBack = document.getElementById('btn-back');
+        const btnNext = document.getElementById('btn-next');
+        const setupFooter = document.getElementById('setup-footer');
+        const licenseCheck = document.getElementById('license-check');
+        const toastContainer = document.getElementById('toast-container');
+
+        // Boot sequence
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                bootScreen.style.opacity = '0';
+                bootScreen.style.transition = 'opacity 1s ease';
+                setTimeout(() => {
+                    bootScreen.classList.add('hidden');
+                    setupWindow.classList.remove('hidden');
+                    setupWindow.classList.add('fade-in');
+                }, 1000);
+            }, 2500);
+        });
+
+        function updateUI() {
+            document.querySelectorAll('.step-content').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('fade-in');
+            });
+
+            const currentSection = document.getElementById(`step-${currentStep}`);
+            currentSection.classList.remove('hidden');
+            currentSection.classList.add('fade-in');
+
+            // Update counter display (Step 4 is the final screen, so keep showing 3/3 until it hides)
+            stepIndicator.textContent = `Step ${Math.min(currentStep, totalSteps)} of ${totalSteps}`;
+
+            // Hide footer on the final finish screen
+            if (currentStep === 4) {
+                setupFooter.classList.add('hidden');
+            } else {
+                setupFooter.classList.remove('hidden');
+            }
+
+            // Handle Back button visibility
+            btnBack.disabled = currentStep === 1;
+            
+            // Handle Next button text
+            if (currentStep === 2) {
+                btnNext.textContent = "Install"; // Change text to "Install" on the license page
+            } else {
+                btnNext.textContent = "Next";
+            }
+        }
+
+        function nextStep() {
+            if (!validateStep()) return;
+
+            // If clicking Install on the License page (Step 2), go to Step 3 and auto-start
+            if (currentStep === 2) {
+                currentStep = 3;
+                updateUI();
+                startInstall();
+                return;
+            }
+
+            if (currentStep < 4) { 
+                currentStep++;
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function validateStep() {
+            if (currentStep === 2) {
+                if (!licenseCheck.checked) {
+                    showToast("You must accept the license agreement to continue.", "error");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function startInstall() {
+            isInstalling = true;
+            
+            // Hide nav buttons during install
+            setupFooter.classList.add('hidden');
+
+            const progressBar = document.getElementById('install-progress');
+            const statusText = document.getElementById('install-status');
+            const logContainer = document.getElementById('install-log');
+
+            let progress = 0;
+            const tasks = [
+                { pct: 10, msg: "Copying system files..." },
+                { pct: 30, msg: "Installing kernel modules..." },
+                { pct: 50, msg: "Configuring hardware drivers..." },
+                { pct: 70, msg: "Setting up file system..." },
+                { pct: 90, msg: "Finalizing configuration..." },
+                { pct: 100, msg: "Complete." }
+            ];
+            let taskIndex = 0;
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 2;
+                
+                if (taskIndex < tasks.length && progress >= tasks[taskIndex].pct) {
+                    statusText.textContent = tasks[taskIndex].msg;
+                    addLog(logContainer, tasks[taskIndex].msg);
+                    taskIndex++;
+                }
+
+                if (Math.random() > 0.8) {
+                    addLog(logContainer, getRandomLogLine());
+                }
+
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        isInstalling = false;
+                        currentStep = 4; // Jump to complete screen
+                        updateUI();
+                    }, 1000);
+                }
+
+                progressBar.style.width = `${progress}%`;
+            }, 50);
+        }
+
+        function addLog(container, text) {
+            const div = document.createElement('div');
+            const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
+            div.textContent = `[${time}] ${text}`;
+            container.prepend(div);
+            if(container.children.length > 5) container.lastElementChild.remove();
+        }
+
+        function getRandomLogLine() {
+            const lines = ["Extracting archive...", "Verifying checksums...", "Writing to /dev/sda1...", "Registering components...", "Optimizing system settings..."];
+            return lines[Math.floor(Math.random() * lines.length)];
+        }
+
+        function showToast(message, type = "normal") {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            let icon = '';
+            if(type === 'error') icon = '<span style="color:var(--danger)">✕</span>';
+            if(type === 'success') icon = '<span style="color:var(--success)">✓</span>';
+            toast.innerHTML = `${icon}<span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
